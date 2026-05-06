@@ -1,0 +1,148 @@
+.listings-page {
+  min-height: calc(100vh - 82px);
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 32px 28px 64px;
+  background: #fbfafa;
+}
+
+/* Search bar */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px;
+  height: 52px;
+  border: 1.5px solid #dce2e8;
+  border-radius: 999px;
+  background: #fff;
+  flex: 1;
+  max-width: 540px;
+  transition: border-color 0.15s ease;
+}
+
+.search-bar:focus-within {
+  border-color: #ef4f38;
+}
+
+.search-bar__icon {
+  width: 20px;
+  height: 20px;
+  color: #7a808a;
+  flex-shrink: 0;
+}
+
+.search-bar__input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  color: #2d3138;
+  background: transparent;
+  font: inherit;
+  font-size: 15px;
+}
+
+.search-bar__input::placeholder {
+  color: #9ea5b0;
+}
+
+/* Header */
+.listings-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.listings-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.listings-count {
+  margin: 0;
+  margin-left: auto;
+  color: #565c66;
+  font-size: 15px;
+}
+
+.listings-count strong {
+  font-weight: 900;
+  color: #2d3138;
+}
+
+/* Action buttons */
+.saved-badge {
+  background: #ef4f38;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 8px 14px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.saved-only-toggle,
+.saved-toggle,
+.reset-btn {
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  border: 1.5px solid #dce2e8;
+  border-radius: 8px;
+  background: #fff;
+  color: #2d3138;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s ease, color 0.15s ease;
+  font-family: inherit;
+}
+
+.saved-only-toggle:hover,
+.saved-toggle:hover,
+.reset-btn:hover {
+  border-color: #ef4f38;
+  color: #ef4f38;
+}
+
+/* Grid */
+.listings-virtual-container {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.listings-virtual-container > div {
+  overflow-x: hidden !important;
+}
+
+/* Empty state */
+.listings-empty {
+  text-align: center;
+  padding: 80px 20px;
+  color: #717171;
+  font-size: 16px;
+}
+
+@media (max-width: 600px) {
+  .listings-page {
+    padding: 20px 16px 48px;
+  }
+
+  .listings-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-bar {
+    max-width: 100%;
+  }
+
+  .listings-count {
+    margin-left: 0;
+  }
+}
