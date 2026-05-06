@@ -18,7 +18,7 @@ export default function Navbar() {
           end
           className={({ isActive }) => `navbar__link${isActive ? ' navbar__link--active' : ''}`}
         >
-          Home
+          Listing
         </NavLink>
         <NavLink
           to="/dashboard"
