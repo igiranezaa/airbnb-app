@@ -29,7 +29,9 @@
       "Bash(git -C /Users/joanes/klab/airbnb-app status --short)",
       "Bash(xargs cat)",
       "Bash(xargs cat -n)",
-      "Bash(xargs ls -la)"
+      "Bash(xargs ls -la)",
+      "Bash(DATABASE_URL=\"postgresql://airbnb_db_43t2_user:uHkyK3ok1uxVVZpvrJUUuWrFzZoZAClZ@dpg-d7orvgl8nd3s739n9kpg-a.virginia-postgres.render.com/airbnb_db_43t2\" npx tsx prisma/reset-admin.ts)",
+      "Bash(DATABASE_URL=\"postgresql://airbnb_db_43t2_user:uHkyK3ok1uxVVZpvrJUUuWrFzZoZAClZ@dpg-d7orvgl8nd3s739n9kpg-a.virginia-postgres.render.com/airbnb_db_43t2\" npx prisma migrate deploy)"
     ],
     "additionalDirectories": [
       "/Users/joanes/klab/airbnb-api-prisma/src/controllers",
