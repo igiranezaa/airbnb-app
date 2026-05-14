@@ -2,6 +2,7 @@
 import { createContext, useContext, useEffect, useCallback, useState, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import api from '../../../lib/axios';
+import { config } from '../../../config/env';
 import { useStore } from '../../../store/StoreContext';
 
 const AUTH_STORAGE_KEY    = 'liston:is-authenticated';
@@ -83,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [storeDispatch]);
 
   useEffect(() => {
-    if (!import.meta.env.VITE_API_URL || !localStorage.getItem(TOKEN_KEY)) return;
+    if (!config.apiUrl || !localStorage.getItem(TOKEN_KEY)) return;
 
     let cancelled = false;
     async function syncSession() {
@@ -112,7 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [applyAuthUser, clearAuth, queryClient]);
 
   async function login(email: string, password: string): Promise<true | LoginError> {
-    if (import.meta.env.VITE_API_URL) {
+    if (config.apiUrl) {
       try {
         const { data: loginData } = await api.post<{ token?: string; accessToken?: string }>(
           '/auth/login',

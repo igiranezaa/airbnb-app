@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../../../lib/axios';
 import type { CancellationPolicy, ListingType } from '../types';
+import { config } from '../../../config/env';
 
 export interface CreateListingPayload {
   title: string;
@@ -58,7 +59,7 @@ export function useHostListings(userId?: string) {
       const { data } = await api.get<HostListing[]>('/listings/host/mine');
       return data;
     },
-    enabled: !!import.meta.env.VITE_API_URL,
+    enabled: !!config.apiUrl,
     staleTime: 10_000,
     refetchOnWindowFocus: true,
     refetchInterval: 15_000,
@@ -98,7 +99,7 @@ export function useWishlist() {
       const { data } = await api.get('/listings/wishlist');
       return data;
     },
-    enabled: !!import.meta.env.VITE_API_URL,
+    enabled: !!config.apiUrl,
   });
 }
 

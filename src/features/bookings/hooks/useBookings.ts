@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../../lib/axios';
 import { useAuth } from '../../auth/hooks/useAuth';
+import { config } from '../../../config/env';
 
 export interface Booking {
   id: string;
@@ -29,7 +30,7 @@ export function useBookings(view: BookingView = 'auto') {
       const { data } = await api.get<{ data: Booking[] }>(`/bookings?${params.toString()}`);
       return data.data;
     },
-    enabled: !!import.meta.env.VITE_API_URL,
+    enabled: !!config.apiUrl,
     staleTime: 30_000,
     refetchOnWindowFocus: true,
     refetchInterval: userRole === 'HOST' || view === 'host' ? 15_000 : false,

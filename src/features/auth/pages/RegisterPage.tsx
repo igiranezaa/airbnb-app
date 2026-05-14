@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { FaEye, FaEyeSlash, FaExclamationCircle, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import { useAuth } from '../hooks/useAuth';
+import { config } from '../../../config/env';
 import signupImg from '../../../assets/signup.png';
 import './RegisterPage.css';
 
@@ -91,7 +92,7 @@ export default function RegisterPage() {
     setResendLoading(true);
     setResendMsg('');
     try {
-      await fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api/v1'}/auth/resend-verification`, {
+      await fetch(`${config.apiUrl ?? 'http://localhost:3000/api/v1'}/auth/resend-verification`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),

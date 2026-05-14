@@ -3,12 +3,13 @@ import api from '../../../lib/axios';
 import mockListings from '../../../data/listings';
 import { transformListing, type BackendListing } from '../utils/transform';
 import type { Listing } from '../types';
+import { config } from '../../../config/env';
 
 export function useListing(id: string | undefined) {
   return useQuery<Listing>({
     queryKey: ['listing', id],
     queryFn: async () => {
-      if (!import.meta.env.VITE_API_URL) {
+      if (!config.apiUrl) {
         await new Promise((r) => setTimeout(r, 300));
         const listing = mockListings.find((l) => String(l.id) === id);
         if (!listing) throw new Error(`Listing ${id} not found`);

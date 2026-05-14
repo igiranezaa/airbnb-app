@@ -3,6 +3,7 @@ import api from '../../../lib/axios';
 import mockListings from '../../../data/listings';
 import { transformListing, type BackendListing, type PaginatedResponse } from '../utils/transform';
 import type { Listing } from '../types';
+import { config } from '../../../config/env';
 
 export interface ListingSearchParams {
   location?: string;
@@ -23,7 +24,7 @@ export function useListings(params?: ListingSearchParams) {
   return useQuery<Listing[]>({
     queryKey: ['listings', params],
     queryFn: async () => {
-      if (!import.meta.env.VITE_API_URL) {
+      if (!config.apiUrl) {
         await new Promise((r) => setTimeout(r, 600));
         return mockListings;
       }

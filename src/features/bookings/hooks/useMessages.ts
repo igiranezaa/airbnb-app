@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../../../lib/axios';
+import { config } from '../../../config/env';
 
 export interface ApiMessage {
   id: string;
@@ -21,7 +22,7 @@ export function useMessages(bookingId?: string, listingId?: string) {
       const { data } = await api.get<ApiMessage[]>(`/messages?${param}`);
       return data;
     },
-    enabled: !!(bookingId || listingId) && !!import.meta.env.VITE_API_URL,
+    enabled: !!(bookingId || listingId) && !!config.apiUrl,
     refetchInterval: 4000,
   });
 }

@@ -10,6 +10,7 @@ import {
 import toast from 'react-hot-toast';
 import api from '../../../lib/axios';
 import { useAuth } from '../../auth/hooks/useAuth';
+import { config } from '../../../config/env';
 import { useCreateListing } from '../hooks/useHostListings';
 import type { CancellationPolicy } from '../types';
 import './AddListingPage.css';
@@ -220,7 +221,7 @@ export default function AddListingPage() {
   }
 
   async function uploadPhotos(listingId: string) {
-    if (!files.length || !import.meta.env.VITE_API_URL) return;
+    if (!files.length || !config.apiUrl) return;
     // Batch upload 5 at a time (API limit)
     for (let i = 0; i < files.length; i += 5) {
       const form = new FormData();
@@ -244,7 +245,7 @@ export default function AddListingPage() {
   }
 
   async function saveBlockedDates(listingId: string) {
-    if (!blockedDates.length || !import.meta.env.VITE_API_URL) return;
+    if (!blockedDates.length || !config.apiUrl) return;
     await api.post(`/listings/${listingId}/blocked-dates`, { dates: blockedDates });
   }
 
@@ -254,7 +255,7 @@ export default function AddListingPage() {
       toast.error('Fill in title, category, and city before generating a description.');
       return;
     }
-    if (!import.meta.env.VITE_API_URL) {
+    if (!config.apiUrl) {
       toast.error('AI generation requires a live API connection.');
       return;
     }

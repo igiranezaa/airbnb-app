@@ -9,6 +9,7 @@ import {
 } from 'react-icons/fa';
 import { useAuth } from '../hooks/useAuth';
 import api from '../../../lib/axios';
+import { config } from '../../../config/env';
 import './AccountSettingsPage.css';
 
 type Section = 'profile' | 'notifications' | 'payments' | 'sessions' | 'gdpr';
@@ -25,7 +26,7 @@ function useProfile() {
         profile: { bio?: string; country?: string; website?: string; languages?: string[]; contactPreferences?: Record<string, unknown> } | null;
       };
     },
-    enabled: !!import.meta.env.VITE_API_URL,
+    enabled: !!config.apiUrl,
   });
 }
 
@@ -47,7 +48,7 @@ function useNotifPrefs() {
         pushEnabled: boolean; smsEnabled: boolean;
       };
     },
-    enabled: !!import.meta.env.VITE_API_URL,
+    enabled: !!config.apiUrl,
   });
 }
 
@@ -66,7 +67,7 @@ function useSessions() {
       const { data } = await api.get('/users/me/sessions');
       return data as { id: string; deviceName: string; ipAddress: string | null; createdAt: string; lastActive: string; isCurrent: boolean }[];
     },
-    enabled: !!import.meta.env.VITE_API_URL,
+    enabled: !!config.apiUrl,
   });
 }
 
@@ -112,7 +113,7 @@ function usePaymentMethods() {
       const { data } = await api.get('/users/me/payment-methods');
       return data as PaymentMethod[];
     },
-    enabled: !!import.meta.env.VITE_API_URL,
+    enabled: !!config.apiUrl,
   });
 }
 
