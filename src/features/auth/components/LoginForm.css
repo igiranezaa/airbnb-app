@@ -1,53 +1,188 @@
-.login-form {
+/* ─── Form wrapper ───────────────────────────────────────────── */
+.lf {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 0;
+  margin-bottom: 20px;
 }
 
-.login-form__field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+/* ─── Floating-label field ───────────────────────────────────── */
+.lf-field {
+  position: relative;
+  margin-bottom: 16px;
 }
 
-.login-form__label {
-  font-size: 14px;
-  font-weight: 600;
-  color: #222;
-}
-
-.login-form__input {
-  padding: 10px 14px;
+.lf-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 22px 44px 8px 14px;
+  font: inherit;
   font-size: 15px;
-  border: 1.5px solid #ddd;
+  color: #1a1f27;
+  background: #fff;
+  border: 1.5px solid #dce2e8;
   border-radius: 8px;
   outline: none;
-  font-family: inherit;
   transition: border-color 0.15s;
 }
 
-.login-form__input:focus {
-  border-color: #ff385c;
+.lf-input:focus {
+  border-color: #ef4f38;
 }
 
-.login-form__submit {
-  padding: 12px;
-  background: #ff385c;
+/* Floating label */
+.lf-label {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: #9ea5b0;
+  pointer-events: none;
+  transition: top 0.18s ease, font-size 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+/* Float up when input has content or is focused */
+.lf-input:focus ~ .lf-label,
+.lf-input:not(:placeholder-shown) ~ .lf-label {
+  top: 9px;
+  transform: none;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ef4f38;
+  letter-spacing: 0.3px;
+}
+
+/* Error state */
+.lf-field--error .lf-input {
+  border-color: #ef4f38;
+  background: #fff8f7;
+}
+
+.lf-field--error .lf-label {
+  color: #ef4f38;
+}
+
+/* Error icon inside field */
+.lf-error-icon {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #ef4f38;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+/* Error message below field */
+.lf-error-msg {
+  margin: -10px 0 14px 2px;
+  font-size: 12px;
+  color: #ef4f38;
+  font-weight: 500;
+}
+
+/* Password eye toggle */
+.lf-eye-btn {
+  position: absolute;
+  right: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: 0;
+  color: #9ea5b0;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  transition: color 0.15s;
+}
+
+.lf-eye-btn:hover {
+  color: #ef4f38;
+}
+
+/* ─── Remember me ────────────────────────────────────────────── */
+.lf-remember {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  margin-bottom: 24px;
+}
+
+.lf-checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #dce2e8;
+  border-radius: 4px;
+  background: #fff;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.lf-checkbox--checked {
+  border-color: #ef4f38;
+  background: #ef4f38;
+}
+
+.lf-remember__text {
+  font-size: 14px;
+  color: #2d3138;
+}
+
+/* ─── Submit button ──────────────────────────────────────────── */
+.lf-submit {
+  width: 100%;
+  padding: 14px;
+  background: #ef4f38;
   color: #fff;
   border: none;
   border-radius: 8px;
+  font: inherit;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  font-family: inherit;
+  letter-spacing: 0.3px;
   transition: background 0.15s;
 }
 
-.login-form__submit:hover:not(:disabled) {
-  background: #e31c5f;
+.lf-submit:hover:not(:disabled) {
+  background: #d9432d;
 }
 
-.login-form__submit:disabled {
+.lf-submit:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* Terms of service link */
+.lf-terms-link {
+  color: #1a1f27;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.lf-terms-link:hover {
+  color: #ef4f38;
+}
+
+.lf-auth-error {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #fce8e6;
+  color: #c62828;
+  border: 1px solid #f5c6c2;
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
 }

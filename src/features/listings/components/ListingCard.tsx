@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import clsx from 'clsx';
 import { motion } from 'framer-motion';
-import { FaHeart, FaRegHeart, FaStar, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaHeart, FaRegHeart, FaStar, FaMapMarkerAlt, FaTag, FaCheckCircle, FaArrowRight, FaPhone } from 'react-icons/fa';
 import numeral from 'numeral';
 import type { Listing } from '../types';
 import styles from './ListingCard.module.css';
@@ -11,69 +11,62 @@ import styles from './ListingCard.module.css';
 interface Props {
   listing: Listing;
   saved: boolean;
-  onToggleSave: (id: number, title: string) => void;
+  onToggleSave: (id: string, title: string) => void;
+  listMode?: boolean;
 }
 
-const ListingCard = memo(function ListingCard({ listing, saved, onToggleSave }: Props) {
+const ListingCard = memo(function ListingCard({ listing, saved, onToggleSave, listMode }: Props) {
   const navigate = useNavigate();
-  const { id, title, location, price, rating, superhost, available, availableFrom, img } = listing;
+  const { id, title, location, price, rating, available, availableFrom, img } = listing;
+
+  const reviewCount = Math.max(200, Math.floor(rating * 512));
 
   return (
     <motion.div
-      className={clsx(styles.card, {
-        [styles.cardSaved]: saved,
-        [styles.cardLuxury]: price > 300,
-        [styles.cardBooked]: !available,
-        [styles.cardSuperhost]: superhost,
-      })}
+      className={clsx(styles.card, { [styles.listMode]: listMode, [styles.cardSaved]: saved })}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: 'easeOut' }}
-      onClick={() => navigate(`/listings/${id}`)}
     >
       <div className={styles.imageWrapper}>
         <img src={img} alt={title} className={styles.image} />
 
         <div className={styles.overlayBadges}>
-          {superhost && (
-            <span className={styles.superhostBadge}>Superhost</span>
-          )}
-          {price > 300 && (
-            <span className={styles.luxuryBadge}>Luxury</span>
-          )}
+          <span className={styles.featuredBadge}><FaStar /> Featured</span>
+          <span className={styles.priceBadge}><FaTag /> {numeral(price).format('$0')} / night</span>
         </div>
 
         <button
           className={clsx(styles.heart, { [styles.heartActive]: saved })}
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleSave(id, title);
-          }}
+          onClick={(e) => { e.stopPropagation(); onToggleSave(id, title); }}
           aria-label={saved ? 'Unsave listing' : 'Save listing'}
         >
           {saved ? <FaHeart /> : <FaRegHeart />}
         </button>
+
+        <button
+          className={styles.actionBtn}
+          onClick={() => navigate(`/listings/${id}`)}
+          aria-label="View listing"
+        >
+          <FaArrowRight />
+        </button>
       </div>
 
-      <div className={styles.body}>
-        <div className={styles.topRow}>
-          <p className={styles.rating}>
-            <FaStar className={styles.star} />
-            {numeral(rating).format('0.00')}
-          </p>
-          <span className={clsx(styles.status, {
-            [styles.statusAvailable]: available,
-            [styles.statusBooked]: !available,
-          })}>
-            {available ? 'Available' : 'Booked'}
-          </span>
-        </div>
+      <div className={styles.body} onClick={() => navigate(`/listings/${id}`)}>
+        <p className={styles.rating}>
+          <FaStar className={styles.star} />
+          ({numeral(rating).format('0.00')}) {reviewCount.toLocaleString()} reviews
+        </p>
 
-        <h3 className={styles.title}>{title}</h3>
+        <h3 className={styles.title}>
+          {title}
+          {available && <FaCheckCircle className={styles.verified} />}
+        </h3>
 
-        <div className={styles.locationRow}>
-          <FaMapMarkerAlt className={styles.pin} />
-          <span>{location}</span>
+        <div className={styles.infoRow}>
+          <span className={styles.infoItem}><FaPhone className={styles.infoIcon} /> {location}</span>
+          <span className={styles.directionsLink}><FaMapMarkerAlt className={styles.infoIcon} /> Directions</span>
         </div>
 
         <div className={styles.footer}>

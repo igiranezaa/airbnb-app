@@ -8,4 +8,264 @@ body {
   background: #f7f7f7;
   color: #222;
   -webkit-font-smoothing: antialiased;
+  transition: background 0.2s, color 0.2s;
+}
+
+/* ── Dark mode overrides ─────────────────────────────────────── */
+html.dark body {
+  background: #0d1117;
+  color: #e6edf3;
+}
+
+/* Navbar */
+html.dark .navbar {
+  background: #161b22;
+  border-bottom-color: #30363d;
+}
+html.dark .navbar__brand,
+html.dark .navbar__link,
+html.dark .navbar__hosting {
+  color: #e6edf3;
+}
+html.dark .navbar__icon-button {
+  color: #e6edf3;
+}
+
+/* Listings page */
+html.dark .listings-page {
+  background: #0d1117;
+}
+html.dark .listings-toolbar,
+html.dark .listings-count {
+  color: #e6edf3;
+}
+
+/* Sidebar */
+html.dark .listings-sidebar {
+  background: #161b22;
+  border-color: #30363d;
+}
+html.dark .sidebar-section {
+  border-color: #30363d;
+}
+html.dark .sidebar-title {
+  color: #e6edf3;
+}
+html.dark .sidebar-desc {
+  color: #8b949e;
+}
+html.dark .sidebar-select {
+  background: #21262d;
+  color: #e6edf3;
+  border-color: #30363d;
+}
+html.dark .sidebar-price-tag {
+  background: #21262d;
+  color: #e6edf3;
+  border-color: #30363d;
+}
+html.dark .sidebar-category-name {
+  color: #e6edf3;
+}
+html.dark .sidebar-category-count {
+  color: #8b949e;
+}
+html.dark .sidebar-apply-btn {
+  background: #ef4f38;
+}
+
+/* Listing card */
+html.dark .listings-content {
+  background: #0d1117;
+}
+
+/* Auth pages */
+html.dark .login-left,
+html.dark .rp-left,
+html.dark .fp-left {
+  background: #161b22;
+}
+html.dark .login-heading,
+html.dark .rp-heading,
+html.dark .fp-heading {
+  color: #e6edf3;
+}
+html.dark .login-subheading,
+html.dark .rp-subheading,
+html.dark .fp-subheading {
+  color: #8b949e;
+}
+html.dark .lf-input,
+html.dark .rp-input,
+html.dark .fp-input {
+  background: #21262d;
+  border-color: #30363d;
+  color: #e6edf3;
+}
+html.dark .lf-input:focus,
+html.dark .rp-input:focus,
+html.dark .fp-input:focus {
+  border-color: #ef4f38;
+}
+html.dark .lf-label,
+html.dark .rp-label,
+html.dark .fp-label {
+  color: #8b949e;
+}
+html.dark .login-social--google,
+html.dark .rp-social--google {
+  background: #21262d;
+  color: #e6edf3;
+  border-color: #30363d;
+}
+html.dark .login-divider__line,
+html.dark .rp-divider__line {
+  background: #30363d;
+}
+html.dark .login-privacy,
+html.dark .rp-privacy {
+  color: #8b949e;
+}
+html.dark .login-footer,
+html.dark .rp-footer,
+html.dark .fp-footer {
+  color: #8b949e;
+}
+html.dark .login-footer__link,
+html.dark .rp-footer__link,
+html.dark .fp-footer__link {
+  color: #e6edf3;
+}
+html.dark .lf-remember__text,
+html.dark .rp-terms__text {
+  color: #8b949e;
+}
+html.dark .lf-checkbox,
+html.dark .rp-checkbox {
+  background: #21262d;
+  border-color: #30363d;
+}
+
+/* Search wrapper */
+html.dark .listings-search-wrapper {
+  background: #161b22;
+  border-bottom-color: #30363d;
+}
+html.dark .search-section__input {
+  color: #e6edf3;
+}
+html.dark .search-section__input::placeholder {
+  color: #8b949e;
+}
+html.dark .search-section__value {
+  color: #e6edf3;
+}
+html.dark .search-section__placeholder {
+  color: #8b949e;
+}
+html.dark .search-distance-value {
+  color: #e6edf3;
+}
+html.dark .search-sep {
+  background: #30363d;
+}
+html.dark .search-gps-btn {
+  border-color: #30363d;
+  color: #8b949e;
+}
+html.dark .search-dropdown {
+  background: #161b22;
+  border-color: #30363d;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+}
+html.dark .search-dropdown-option {
+  color: #e6edf3;
+}
+html.dark .search-dropdown-option:hover {
+  background: #21262d;
+}
+html.dark .search-dropdown-option--active {
+  background: #21262d;
+}
+html.dark .search-inline-clear,
+html.dark .search-clear-btn {
+  background: #30363d;
+  color: #8b949e;
+}
+
+/* Date bar */
+html.dark .listings-date-bar {
+  background: #161b22;
+  border-bottom-color: #30363d;
+}
+html.dark .ldb-label {
+  color: #8b949e;
+}
+html.dark .ldb-input {
+  background: #21262d;
+  border-color: #30363d;
+  color: #e6edf3;
+}
+
+/* Toolbar */
+html.dark .listings-count strong {
+  color: #e6edf3;
+}
+html.dark .view-btn {
+  background: #21262d;
+  border-color: #30363d;
+  color: #8b949e;
+}
+html.dark .view-btn--active {
+  background: #e6edf3;
+  border-color: #e6edf3;
+  color: #0d1117;
+}
+html.dark .filter-btn {
+  background: #21262d;
+  border-color: #30363d;
+  color: #e6edf3;
+}
+
+/* Sidebar extras */
+html.dark .sidebar-category-checkbox {
+  background: #21262d;
+  border-color: #30363d;
+}
+html.dark .sidebar-toggle-row {
+  color: #8b949e;
+}
+html.dark .sidebar-price-tag--muted {
+  background: #21262d;
+  color: #8b949e;
+}
+html.dark .price-slider-track {
+  background: #30363d;
+}
+
+/* Saved panel */
+html.dark .saved-panel {
+  background: #161b22;
+}
+html.dark .saved-panel__title {
+  color: #e6edf3;
+}
+html.dark .saved-panel__header {
+  background: #161b22;
+  border-color: #30363d;
+}
+html.dark .saved-panel__item:hover {
+  background: #21262d;
+}
+html.dark .saved-panel__item-title {
+  color: #e6edf3;
+}
+html.dark .saved-panel__item-location {
+  color: #8b949e;
+}
+html.dark .saved-panel__close {
+  color: #8b949e;
+}
+html.dark .saved-panel__close:hover {
+  background: #21262d;
 }

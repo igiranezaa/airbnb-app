@@ -5,13 +5,13 @@ import { useStore } from '../../../store/StoreContext';
 export function useFavorites() {
   const { state, dispatch } = useStore();
 
-  const toggle = useCallback((id: number, title: string) => {
+  const toggle = useCallback((id: string, title: string) => {
     const adding = !state.saved.includes(id);
     dispatch({ type: 'TOGGLE_FAVORITE', payload: id });
     toast(adding ? `Saved: ${title}` : `Removed: ${title}`);
   }, [dispatch, state.saved]);
 
-  const isSaved = useCallback((id: number): boolean => {
+  const isSaved = useCallback((id: string): boolean => {
     return state.saved.includes(id);
   }, [state.saved]);
 

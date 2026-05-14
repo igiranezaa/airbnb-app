@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../features/auth/hooks/useAuth';
 import type { ReactNode } from 'react';
@@ -10,6 +10,7 @@ interface Props {
 
 export default function ProtectedRoute({ children }: Props) {
   const { isAuthenticated } = useAuth();
+  const location = useLocation();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -18,7 +19,7 @@ export default function ProtectedRoute({ children }: Props) {
   }, [isAuthenticated]);
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
   return <>{children}</>;

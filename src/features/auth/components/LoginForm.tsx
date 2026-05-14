@@ -1,52 +1,111 @@
 import { useState } from 'react';
+import { FaEye, FaEyeSlash, FaExclamationCircle } from 'react-icons/fa';
 import './LoginForm.css';
 
 interface Props {
-  onLogin: (email: string, password: string) => Promise<void>;
+  onSubmit: (name: string, email: string, password: string) => Promise<void>;
+  authError?: string | null;
 }
 
-export default function LoginForm({ onLogin }: Props) {
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+export default function LoginForm({ onSubmit, authError }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [emailTouched, setEmailTouched] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  const emailError = emailTouched && email.length > 0 && !isValidEmail(email);
+  const emailEmpty = emailTouched && email.length === 0;
+
+  async function handleSubmit(e: { preventDefault(): void }) {
     e.preventDefault();
+    setEmailTouched(true);
+    if (!isValidEmail(email)) return;
     setLoading(true);
-    await onLogin(email, password);
+    await onSubmit('', email, password);
     setLoading(false);
   }
 
   return (
-    <form className="login-form" onSubmit={handleSubmit}>
-      <div className="login-form__field">
-        <label className="login-form__label" htmlFor="email">Email</label>
+    <form className="lf" onSubmit={handleSubmit} noValidate>
+      {/* Email */}
+      <div className={`lf-field${emailError || emailEmpty ? ' lf-field--error' : ''}`}>
         <input
-          id="email"
-          className="login-form__input"
+          id="lf-email"
+          className="lf-input"
           type="email"
+          placeholder=" "
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com"
-          required
+          onBlur={() => setEmailTouched(true)}
+          autoComplete="email"
         />
+        <label htmlFor="lf-email" className="lf-label">Enter Email *</label>
+        {(emailError || emailEmpty) && (
+          <span className="lf-error-icon" aria-hidden="true">
+            <FaExclamationCircle />
+          </span>
+        )}
       </div>
+      {(emailError || emailEmpty) && (
+        <p className="lf-error-msg">Enter your valid email</p>
+      )}
 
-      <div className="login-form__field">
-        <label className="login-form__label" htmlFor="password">Password</label>
+      {/* Password */}
+      <div className="lf-field">
         <input
-          id="password"
-          className="login-form__input"
-          type="password"
+          id="lf-password"
+          className="lf-input"
+          type={showPassword ? 'text' : 'password'}
+          placeholder=" "
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="••••••••"
-          required
+          autoComplete="current-password"
         />
+        <label htmlFor="lf-password" className="lf-label">Password *</label>
+        <button
+          type="button"
+          className="lf-eye-btn"
+          onClick={() => setShowPassword((v) => !v)}
+          aria-label={showPassword ? 'Hide password' : 'Show password'}
+        >
+          {showPassword ? <FaEye /> : <FaEyeSlash />}
+        </button>
       </div>
 
-      <button className="login-form__submit" type="submit" disabled={loading}>
-        {loading ? 'Signing in…' : 'Sign in'}
+      {/* Remember me */}
+      <label className="lf-remember">
+        <span
+          className={`lf-checkbox${rememberMe ? ' lf-checkbox--checked' : ''}`}
+          onClick={() => setRememberMe((v) => !v)}
+          role="checkbox"
+          aria-checked={rememberMe}
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && setRememberMe((v) => !v)}
+        >
+          {rememberMe && (
+            <svg viewBox="0 0 12 10" width="12" height="10" fill="none">
+              <path d="M1 5l3.5 3.5L11 1" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </span>
+        <span className="lf-remember__text">Remember me next time</span>
+      </label>
+
+      {authError && (
+        <p className="lf-auth-error" role="alert">
+          <FaExclamationCircle /> {authError}
+        </p>
+      )}
+
+      {/* Submit */}
+      <button className="lf-submit" type="submit" disabled={loading}>
+        {loading ? 'Signing in…' : 'Sign In'}
       </button>
     </form>
   );

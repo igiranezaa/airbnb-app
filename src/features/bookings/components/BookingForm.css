@@ -1,0 +1,305 @@
+/* ── Overlay ─────────────────────────────────────────────────── */
+.booking-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+/* ── Modal ───────────────────────────────────────────────────── */
+.booking-modal {
+  background: var(--color-card, #fff);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-width: 520px;
+  padding: 32px;
+  position: relative;
+  animation: modal-in 0.2s ease;
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.booking-modal__close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--color-text-muted, #717171);
+  transition: color 0.15s;
+}
+
+.booking-modal__close:hover {
+  color: var(--color-text, #222);
+}
+
+/* ── Step indicators ─────────────────────────────────────────── */
+.booking-steps {
+  display: flex;
+  gap: 0;
+  margin-bottom: 8px;
+  overflow-x: auto;
+}
+
+.booking-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  position: relative;
+}
+
+.booking-step + .booking-step::before {
+  content: '';
+  position: absolute;
+  left: -50%;
+  top: 14px;
+  width: 100%;
+  height: 2px;
+  background: var(--color-border, #e6eaef);
+  z-index: 0;
+}
+
+.booking-step--done + .booking-step::before {
+  background: #ff385c;
+}
+
+.booking-step__dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-border, #e6eaef);
+  color: var(--color-text-muted, #717171);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  position: relative;
+  z-index: 1;
+  transition: background 0.2s, color 0.2s;
+}
+
+.booking-step--active .booking-step__dot {
+  background: #ff385c;
+  color: #fff;
+}
+
+.booking-step--done .booking-step__dot {
+  background: #ff385c;
+  color: #fff;
+}
+
+.booking-step__label {
+  font-size: 11px;
+  color: var(--color-text-muted, #717171);
+  margin-top: 4px;
+  white-space: nowrap;
+}
+
+.booking-step--active .booking-step__label,
+.booking-step--done .booking-step__label {
+  color: #ff385c;
+  font-weight: 600;
+}
+
+.booking-step-info {
+  text-align: center;
+  font-size: 12px;
+  color: var(--color-text-muted, #717171);
+  margin: 0 0 20px;
+}
+
+/* ── Form shell ──────────────────────────────────────────────── */
+.booking-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.booking-form__title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text, #222);
+  margin: 0 0 4px;
+}
+
+/* ── Form fields ─────────────────────────────────────────────── */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text, #222);
+}
+
+.form-label--hint {
+  font-weight: 400;
+  color: var(--color-text-muted, #717171);
+}
+
+.form-input {
+  padding: 10px 14px;
+  border: 1.5px solid var(--color-border, #d0d7df);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--color-text, #222);
+  background: var(--color-bg-input, #fff);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: #ff385c;
+  box-shadow: 0 0 0 3px rgba(255, 56, 92, 0.12);
+}
+
+.form-input--error {
+  border-color: #e0162b;
+}
+
+.form-file {
+  font-size: 13px;
+  color: var(--color-text-muted, #717171);
+}
+
+.form-error {
+  font-size: 12px;
+  color: #e0162b;
+  font-weight: 500;
+}
+
+/* Expiry + CVV side by side */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* ── Photo preview ───────────────────────────────────────────── */
+.photo-preview {
+  margin-top: 8px;
+}
+
+.photo-preview__img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ff385c;
+}
+
+/* ── Actions ─────────────────────────────────────────────────── */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.btn-primary {
+  padding: 11px 28px;
+  background: #ff385c;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-primary:hover {
+  background: #e31c5f;
+}
+
+.btn-primary--confirm {
+  min-width: 160px;
+}
+
+.btn-secondary {
+  padding: 11px 24px;
+  background: transparent;
+  color: var(--color-text, #222);
+  border: 1.5px solid var(--color-border, #d0d7df);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.btn-secondary:hover {
+  border-color: #ff385c;
+  color: #ff385c;
+}
+
+/* ── Confirmation summary ────────────────────────────────────── */
+.confirmation-section {
+  border: 1px solid var(--color-border, #e6eaef);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.confirmation-section__heading {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted, #717171);
+  margin: 0 0 4px;
+}
+
+.confirmation-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: var(--color-text, #222);
+  margin: 0;
+}
+
+.confirmation-row--total {
+  border-top: 1px solid var(--color-border, #e6eaef);
+  padding-top: 8px;
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+.booking-instant-notice {
+  background: #fff8e1;
+  color: #b45309;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.form-hint {
+  font-size: 12px;
+  color: #888;
+  margin: -4px 0 12px;
+  padding: 6px 10px;
+  background: #f5f5f5;
+  border-radius: 6px;
+}

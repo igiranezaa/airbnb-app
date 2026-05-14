@@ -1,0 +1,225 @@
+.db-bookings {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.bk-total {
+  font-size: 0.8rem;
+  color: #888;
+  background: #f5f5f5;
+  padding: 2px 10px;
+  border-radius: 12px;
+}
+
+.bk-empty {
+  padding: 2rem;
+  text-align: center;
+  color: #888;
+  font-size: 0.95rem;
+}
+
+.bk-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.bk-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.15s;
+}
+
+.bk-item:hover {
+  background: #fafafa;
+}
+
+.bk-item:last-child {
+  border-bottom: none;
+}
+
+.bk-item__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.bk-item__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bk-item__location,
+.bk-item__dates {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: #666;
+  margin: 0;
+}
+
+.bk-item__location svg,
+.bk-item__dates svg {
+  color: #ef4f38;
+  flex-shrink: 0;
+}
+
+.bk-item__nights {
+  margin-left: 0.5rem;
+  background: #f5f5f5;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  color: #555;
+}
+
+.bk-item__price {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ef4f38;
+  margin: 0;
+}
+
+.bk-item__right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+/* Status badges */
+.bk-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.bk-status--confirmed {
+  background: #e6f4ea;
+  color: #2e7d32;
+}
+
+.bk-status--pending {
+  background: #fff8e1;
+  color: #f57f17;
+}
+
+.bk-status--cancelled {
+  background: #fce8e6;
+  color: #c62828;
+}
+
+.bk-item__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.bk-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.bk-btn--message {
+  background: #ef4f38;
+  color: #fff;
+  border-color: #ef4f38;
+}
+
+.bk-btn--message:hover {
+  background: #d43d28;
+  border-color: #d43d28;
+}
+
+.bk-btn--cancel {
+  background: #fff;
+  color: #c62828;
+  border-color: #e0e0e0;
+}
+
+.bk-btn--cancel:hover:not(:disabled) {
+  background: #fce8e6;
+  border-color: #c62828;
+}
+
+.bk-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.bk-item__pending-note {
+  margin: 4px 0 0;
+  font-size: 0.75rem;
+  color: #f57f17;
+  text-align: right;
+}
+
+.bk-item__rejection {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 200px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 0.78rem;
+  text-align: right;
+}
+.bk-item__rejection-label {
+  font-weight: 700;
+  color: #b91c1c;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.bk-item__rejection-text {
+  color: #7f1d1d;
+  line-height: 1.4;
+}
+
+@media (max-width: 640px) {
+  .bk-item {
+    flex-direction: column;
+    padding: 1rem;
+  }
+
+  .bk-item__right {
+    align-items: flex-start;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .bk-item__rejection { max-width: 100%; text-align: left; }
+}

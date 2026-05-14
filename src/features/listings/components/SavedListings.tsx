@@ -1,6 +1,7 @@
 import { Transition } from '@headlessui/react';
 import numeral from 'numeral';
 import { useStore } from '../../../store/StoreContext';
+import { useListings } from '../hooks/useListings';
 import './SavedListings.css';
 
 interface Props {
@@ -10,7 +11,8 @@ interface Props {
 
 export default function SavedListings({ open, onClose }: Props) {
   const { state } = useStore();
-  const savedListings = state.listings.filter((l) => state.saved.includes(l.id));
+  const { data: allListings = [] } = useListings();
+  const savedListings = allListings.filter((l) => state.saved.includes(l.id));
 
   return (
     <>

@@ -1,30 +1,241 @@
+/* ─── Two-column shell ───────────────────────────────────────── */
 .login-page {
-  min-height: calc(100vh - 60px);
+  display: flex;
+  min-height: calc(100vh - 82px);
+}
+
+/* ─── Left panel ─────────────────────────────────────────────── */
+.login-left {
+  flex: 0 0 560px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px 20px;
-  background: #f7f7f7;
+  background: #fff;
+  padding: 48px 40px;
 }
 
-.login-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 40px;
+.login-left__inner {
   width: 100%;
   max-width: 420px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
 }
 
-.login-card__title {
-  font-size: 24px;
+/* Heading */
+.login-heading {
+  font-size: 32px;
+  font-weight: 800;
+  color: #1a1f27;
+  line-height: 1.25;
+  margin: 0 0 14px;
+}
+
+.login-heading__accent {
+  font-style: italic;
+  color: #ef4f38;
+  font-family: Georgia, 'Times New Roman', serif;
   font-weight: 700;
-  color: #222;
-  margin: 0 0 8px;
 }
 
-.login-card__subtitle {
-  font-size: 15px;
-  color: #717171;
+.login-subheading {
+  font-size: 14px;
+  color: #7a808a;
+  line-height: 1.6;
   margin: 0 0 28px;
+}
+
+/* Social buttons */
+.login-socials {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.login-social {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 13px 20px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s, box-shadow 0.15s;
+}
+
+.login-social:hover {
+  opacity: 0.88;
+}
+
+.login-social--apple {
+  background: #1a1f27;
+  color: #fff;
+  border: none;
+}
+
+.login-social--google {
+  background: #fff;
+  color: #2d3138;
+  border: 1.5px solid #dce2e8;
+}
+
+.login-social__icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* Privacy */
+.login-privacy {
+  font-size: 12px;
+  color: #9ea5b0;
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+
+/* Or divider */
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.login-divider__line {
+  flex: 1;
+  height: 1px;
+  background: #e6eaef;
+}
+
+.login-divider__text {
+  font-size: 13px;
+  color: #9ea5b0;
+  white-space: nowrap;
+}
+
+/* Footer */
+.login-footer {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #7a808a;
+  text-align: center;
+}
+
+.login-footer__link {
+  color: #2d3138;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.login-footer__link:hover {
+  color: #ef4f38;
+}
+
+.login-footer__link--underline {
+  text-decoration: underline;
+}
+
+/* ─── Right panel ─────────────────────────────────────────────── */
+.login-right {
+  flex: 1;
+  background: #f7f3ef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 40px;
+}
+
+.login-right__inner {
+  max-width: 460px;
+  text-align: center;
+}
+
+.login-right__title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #1a1f27;
+  line-height: 1.3;
+  margin: 0 0 14px;
+}
+
+.login-right__subtitle {
+  font-size: 14px;
+  color: #7a808a;
+  line-height: 1.6;
+  margin: 0 0 32px;
+}
+
+.login-illustration {
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto;
+}
+
+.login-illustration svg,
+.login-illustration img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 860px) {
+  .login-right {
+    display: none;
+  }
+
+  .login-left {
+    flex: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-left {
+    padding: 32px 20px;
+    align-items: flex-start;
+  }
+
+  .login-heading {
+    font-size: 26px;
+  }
+}
+
+/* ── Dark mode ───────────────────────────────────────────────── */
+html.dark .login-left {
+  background: #161b22;
+}
+html.dark .login-heading {
+  color: #e6edf3;
+}
+html.dark .login-subheading {
+  color: #8b949e;
+}
+html.dark .login-social--google {
+  background: #21262d;
+  color: #e6edf3;
+  border-color: #30363d;
+}
+html.dark .login-privacy,
+html.dark .login-divider__text {
+  color: #8b949e;
+}
+html.dark .login-divider__line {
+  background: #30363d;
+}
+html.dark .login-footer {
+  color: #8b949e;
+}
+html.dark .login-footer__link {
+  color: #e6edf3;
+}
+html.dark .login-right {
+  background: #0d1117;
+}
+html.dark .login-right__title {
+  color: #e6edf3;
+}
+html.dark .login-right__subtitle {
+  color: #8b949e;
 }
