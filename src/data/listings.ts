@@ -1,7 +1,6 @@
 import type { Listing } from '../features/listings/types';
 
-// Mock data — only the fields needed for UI; cast to Listing[] for type compatibility.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// Mock data — sparse objects cast via unknown; missing fields are undefined at runtime.
 const listings = [
   // --- Beach ---
   { id: '1',  title: 'Beachfront Paradise Villa',   location: 'Malibu, California',          price: 420, rating: 4.97, superhost: true,  available: true,  availableFrom: '2025-01-12', img: 'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=400&h=260&fit=crop', category: 'beach',       lat: 34.0259,  lng: -118.7798 },

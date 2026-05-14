@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Card } from '../components/Card';
 import dayjs from 'dayjs';
 import {
   FaStar, FaMapMarkerAlt, FaArrowLeft, FaCommentDots, FaUserCircle,
@@ -7,6 +8,7 @@ import {
 } from 'react-icons/fa';
 import numeral from 'numeral';
 import { useListing } from '../hooks/useListing';
+import { useListings } from '../hooks/useListings';
 import { useToggleSaved } from '../hooks/useToggleSaved';
 import { useReviews, useCreateReview, useRespondToReview, type SubRatings } from '../hooks/useReviews';
 import { useAuth } from '../../auth/hooks/useAuth';
@@ -61,6 +63,7 @@ export default function ListingDetail() {
 
   const { data: listing, isLoading, isError } = useListing(id);
   const { isSaved, toggle, isPending } = useToggleSaved(id ?? '');
+  const { data: allListings = [] } = useListings();
   const { data: reviews = [] } = useReviews(id);
   const { mutate: createReview, isPending: submittingReview, error: reviewError } = useCreateReview(id);
   const { mutate: respondToReview, isPending: submittingResponse } = useRespondToReview();
@@ -347,6 +350,37 @@ export default function ListingDetail() {
           </aside>
         </div>
       </div>
+
+      {/* Similar listings */}
+      {allListings.filter((l) => l.id !== listing.id && l.category === listing.category).slice(0, 3).length > 0 && (
+        <div className="detail-similar">
+          <h3 className="detail-similar__title">Similar stays in {listing.category}</h3>
+          <div className="detail-similar__grid">
+            {allListings
+              .filter((l) => l.id !== listing.id && l.category === listing.category)
+              .slice(0, 3)
+              .map((l) => (
+                <Card
+                  key={l.id}
+                  listing={l}
+                  className="card"
+                  onClick={() => navigate(`/listings/${l.id}`)}
+                >
+                  <Card.Image />
+                  <div className="card__body">
+                    <Card.Badge />
+                    <Card.Title />
+                    <Card.Location />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
+                      <Card.Price />
+                      <Card.Rating />
+                    </div>
+                  </div>
+                </Card>
+              ))}
+          </div>
+        </div>
+      )}
 
       {showBooking && (
         <BookingForm

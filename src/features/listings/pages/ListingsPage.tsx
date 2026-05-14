@@ -6,7 +6,7 @@ import { useStore } from '../../../store/StoreContext';
 import { useListings, type ListingSearchParams } from '../hooks/useListings';
 import { useFavorites } from '../hooks/useFavorites';
 import type { Listing } from '../types';
-import ListingCard from '../components/ListingCard';
+import { Card } from '../components/Card';
 import SearchBar from '../components/SearchBar';
 import Spinner from '../../../shared/components/Spinner';
 import ListingsMap from '../components/ListingsMap';
@@ -76,7 +76,18 @@ function ListingRow({
           onMouseEnter={() => onHoverListing(listing.id)}
           onMouseLeave={() => onHoverListing(null)}
         >
-          <ListingCard listing={listing} saved={isSaved(listing.id)} onToggleSave={onToggleSave} listMode={listMode} />
+          <Card listing={listing} saved={isSaved(listing.id)} onToggleSave={onToggleSave} className={`card${listMode ? ' card--list' : ''}`}>
+            <Card.Image />
+            <div className="card__body">
+              <Card.Badge />
+              <Card.Title />
+              <Card.Location />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
+                <Card.Price />
+                <Card.Rating />
+              </div>
+            </div>
+          </Card>
         </div>
       ))}
     </div>

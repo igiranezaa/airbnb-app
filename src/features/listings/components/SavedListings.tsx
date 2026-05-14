@@ -2,6 +2,8 @@ import { Transition } from '@headlessui/react';
 import numeral from 'numeral';
 import { useStore } from '../../../store/StoreContext';
 import { useListings } from '../hooks/useListings';
+import { List } from '../../../shared/components/List';
+import type { Listing } from '../types';
 import './SavedListings.css';
 
 interface Props {
@@ -29,24 +31,24 @@ export default function SavedListings({ open, onClose }: Props) {
             </button>
           </div>
 
-          {savedListings.length === 0 ? (
-            <p className="saved-panel__empty">No listings saved yet.</p>
-          ) : (
-            <ul className="saved-panel__list">
-              {savedListings.map((l) => (
-                <li key={l.id} className="saved-panel__item">
-                  <img src={l.img} alt={l.title} className="saved-panel__thumb" />
-                  <div className="saved-panel__info">
-                    <p className="saved-panel__item-title">{l.title}</p>
-                    <p className="saved-panel__item-location">{l.location}</p>
-                    <p className="saved-panel__item-price">
-                      {numeral(l.price).format('$0')} / night
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
+          <List<Listing>
+            items={savedListings}
+            keyExtractor={(l) => l.id}
+            emptyMessage="No listings saved yet."
+            className="saved-panel__list"
+            renderItem={(l) => (
+              <div className="saved-panel__item">
+                <img src={l.img} alt={l.title} className="saved-panel__thumb" />
+                <div className="saved-panel__info">
+                  <p className="saved-panel__item-title">{l.title}</p>
+                  <p className="saved-panel__item-location">{l.location}</p>
+                  <p className="saved-panel__item-price">
+                    {numeral(l.price).format('$0')} / night
+                  </p>
+                </div>
+              </div>
+            )}
+          />
         </div>
       </Transition>
     </>

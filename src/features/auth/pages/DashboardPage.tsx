@@ -1,12 +1,13 @@
 import { lazy, Suspense } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import Spinner from '../../../shared/components/Spinner';
+import { withAuth } from '../../../shared/hocs/withAuth';
 
 const GuestDashboard = lazy(() => import('./GuestDashboard'));
 const HostDashboard = lazy(() => import('./HostDashboard'));
 const AdminDashboard = lazy(() => import('./AdminDashboard'));
 
-export default function DashboardPage() {
+function DashboardPage() {
   const { userRole } = useAuth();
 
   return (
@@ -17,3 +18,5 @@ export default function DashboardPage() {
     </Suspense>
   );
 }
+
+export default withAuth(DashboardPage);

@@ -74,8 +74,8 @@ function AdminOverview({ onNavigate }: { onNavigate: (s: AdminSection, filter?: 
         </article>
         <article className="db-overview-card">
           <p>Recent Cancellations <span style={{ fontSize: '0.7rem', color: '#888' }}>(24h)</span></p>
-          <strong style={{ fontSize: '2rem', color: (stats as any)?.recentCancellations ? '#f57f17' : '#2e7d32' }}>
-            {(stats as any)?.recentCancellations ?? '—'}
+          <strong style={{ fontSize: '2rem', color: stats?.recentCancellations ? '#f57f17' : '#2e7d32' }}>
+            {stats?.recentCancellations ?? '—'}
           </strong>
         </article>
         <article className="db-overview-card">
@@ -384,7 +384,7 @@ function BookingsTable() {
                 <td style={{ padding: '0.85rem 1rem', color: '#555' }}>{new Date(b.checkOut).toLocaleDateString()}</td>
                 <td style={{ padding: '0.85rem 1rem', fontWeight: 600, color: '#ef4f38' }}>{numeral(b.totalPrice).format('$0,0')}</td>
                 <td style={{ padding: '0.85rem 1rem', color: '#2e7d32', fontSize: '0.85rem' }}>
-                  {(b as any).refundAmount ? numeral((b as any).refundAmount).format('$0,0') : '—'}
+                  {b.refundAmount ? numeral(b.refundAmount).format('$0,0') : '—'}
                 </td>
                 <td style={{ padding: '0.85rem 1rem' }}>
                   <span style={{ background: b.status === 'CONFIRMED' ? '#e6f4ea' : b.status === 'PENDING' ? '#fff8e1' : '#fce8e6', color: b.status === 'CONFIRMED' ? '#2e7d32' : b.status === 'PENDING' ? '#f57f17' : '#c62828', padding: '2px 8px', borderRadius: 10, fontSize: '0.75rem', fontWeight: 600 }}>{b.status}</span>

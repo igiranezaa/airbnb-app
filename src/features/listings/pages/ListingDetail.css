@@ -700,3 +700,25 @@ html.dark .detail-tag { background: #21262d; color: #c9d1d9; }
 html.dark .detail-host-card { background: #161b22; border-color: #30363d; }
 html.dark .detail-host-name { color: #e6edf3; }
 html.dark .detail-instant-badge { background: #2a2000; border-color: #4a3800; }
+
+/* ── Similar listings ────────────────────────────────────────────────────── */
+.detail-similar {
+  max-width: 1100px;
+  margin: 40px auto 0;
+  padding: 0 24px 48px;
+}
+.detail-similar__title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1a1f27;
+  margin-bottom: 20px;
+  text-transform: capitalize;
+}
+.detail-similar__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+@media (max-width: 768px) {
+  .detail-similar__grid { grid-template-columns: 1fr; }
+}

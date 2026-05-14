@@ -112,9 +112,7 @@ export default function App() {
             path="/dashboard"
             element={
               <Suspense fallback={<Spinner />}>
-                <ProtectedRoute>
-                  <DashboardPage />
-                </ProtectedRoute>
+                <DashboardPage />
               </Suspense>
             }
           />

@@ -35,6 +35,7 @@ export interface AdminDashboardStats {
   platformUptime: string;
   totalUsers: number;
   totalListings: number;
+  recentCancellations?: number;
 }
 
 export interface Dispute {

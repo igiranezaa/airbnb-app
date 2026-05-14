@@ -14,6 +14,7 @@ export interface Booking {
   guest: { name: string; email: string };
   listing: { title: string; location: string; hostId: string };
   rejectionReason?: string;
+  refundAmount?: number;
 }
 
 type BookingView = 'auto' | 'guest' | 'host';
