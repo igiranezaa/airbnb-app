@@ -41,9 +41,14 @@ export function useListings(params?: ListingSearchParams) {
       if (params?.minRooms) q.set('minRooms', String(params.minRooms));
       if (params?.minBathrooms) q.set('minBathrooms', String(params.minBathrooms));
       q.set('limit', '100');
-      const { data } = await api.get<PaginatedResponse<BackendListing>>(`/listings/search?${q.toString()}`);
-      if (data.data.length === 0 && !params) return mockListings;
-      return data.data.map(transformListing);
+      try {
+        const { data } = await api.get<PaginatedResponse<BackendListing>>(`/listings/search?${q.toString()}`);
+        if (data.data.length === 0 && !params) return mockListings;
+        return data.data.map(transformListing);
+      } catch {
+        if (!params) return mockListings;
+        return [];
+      }
     },
     staleTime: 30_000,
   });
