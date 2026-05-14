@@ -42,6 +42,7 @@ export function useListings(params?: ListingSearchParams) {
       if (params?.minBathrooms) q.set('minBathrooms', String(params.minBathrooms));
       q.set('limit', '100');
       const { data } = await api.get<PaginatedResponse<BackendListing>>(`/listings/search?${q.toString()}`);
+      if (data.data.length === 0 && !params) return mockListings;
       return data.data.map(transformListing);
     },
     staleTime: 30_000,
