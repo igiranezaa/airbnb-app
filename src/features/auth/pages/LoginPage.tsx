@@ -23,7 +23,7 @@ export default function LoginPage() {
     setIsLocked(false);
     const result = await login(email, password);
     if (result === true) {
-      navigate('/', { replace: true });
+      navigate(from, { replace: true });
     } else {
       setIsLocked(result.locked ?? false);
       setAuthError(result.message);

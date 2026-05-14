@@ -4,7 +4,7 @@ import {
   FaMapMarkerAlt, FaSignOutAlt, FaTachometerAlt, FaTrashAlt,
   FaUsers, FaHome, FaCalendarAlt, FaExclamationTriangle,
   FaGavel, FaTag, FaHistory, FaBan, FaPause, FaEdit, FaCheck,
-  FaTimesCircle, FaChevronLeft, FaChevronRight, FaList,
+  FaChevronLeft, FaChevronRight,
   FaIdCard, FaCog, FaUpload, FaCamera, FaFacebook, FaTwitter,
   FaInstagram, FaLinkedin, FaLock, FaBuilding, FaMapPin, FaCalendarCheck,
 } from 'react-icons/fa';
@@ -733,13 +733,13 @@ function AuditSection() {
                 </td>
                 <td style={{ padding: '0.85rem 1rem', maxWidth: 280 }}>
                   <div style={{ display: 'flex', gap: 4, alignItems: 'flex-start' }}>
-                    {log.before && (
+                    {Boolean(log.before) && (
                       <pre style={{ margin: 0, fontSize: '0.7rem', background: '#fce8e6', padding: '2px 6px', borderRadius: 4, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
                         {JSON.stringify(log.before, null, 0).slice(0, 80)}
                       </pre>
                     )}
-                    {log.before && log.after && <span style={{ color: '#aaa' }}>→</span>}
-                    {log.after && (
+                    {Boolean(log.before) && Boolean(log.after) && <span style={{ color: '#aaa' }}>→</span>}
+                    {Boolean(log.after) && (
                       <pre style={{ margin: 0, fontSize: '0.7rem', background: '#e8f5e9', padding: '2px 6px', borderRadius: 4, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
                         {JSON.stringify(log.after, null, 0).slice(0, 80)}
                       </pre>

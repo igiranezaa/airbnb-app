@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { FaEye, FaEyeSlash, FaExclamationCircle, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import { useAuth } from '../hooks/useAuth';
 import signupImg from '../../../assets/signup.png';
@@ -43,7 +43,6 @@ function PasswordStrength({ password }: { password: string }) {
 }
 
 export default function RegisterPage() {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const roleParam = searchParams.get('role')?.toUpperCase() || 'GUEST';
   const isHost = roleParam === 'HOST';

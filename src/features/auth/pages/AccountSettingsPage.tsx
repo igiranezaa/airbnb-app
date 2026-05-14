@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   FaUser, FaBell, FaShieldAlt, FaDatabase,
   FaExchangeAlt, FaTrashAlt, FaDownload, FaCheckCircle,
-  FaMonitor, FaMobileAlt, FaSignOutAlt, FaArrowLeft,
+  FaDesktop, FaMobileAlt, FaSignOutAlt, FaArrowLeft,
   FaCamera, FaCreditCard, FaPaypal, FaUniversity, FaPlus, FaStar,
 } from 'react-icons/fa';
 import { useAuth } from '../hooks/useAuth';
@@ -391,7 +391,7 @@ function SessionsSection() {
           {sessions.map((s) => (
             <div key={s.id} className={`as-session-row${s.isCurrent ? ' as-session-row--current' : ''}`}>
               <div className="as-session-icon">
-                {s.deviceName.toLowerCase().includes('mobile') ? <FaMobileAlt /> : <FaMonitor />}
+                {s.deviceName.toLowerCase().includes('mobile') ? <FaMobileAlt /> : <FaDesktop />}
               </div>
               <div style={{ flex: 1 }}>
                 <p className="as-session-device">{s.deviceName} {s.isCurrent && <span className="as-session-current-badge">Current</span>}</p>

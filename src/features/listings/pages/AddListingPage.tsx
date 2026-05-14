@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
   FaUser, FaMapMarkerAlt, FaImages, FaInfoCircle, FaClock,
-  FaList, FaPlus, FaTrash, FaChevronDown, FaChevronUp,
+  FaList, FaPlus, FaChevronDown, FaChevronUp,
   FaCloudUploadAlt, FaSearch, FaTimes, FaBed, FaBath,
   FaToggleOn, FaToggleOff, FaCalendarAlt,
 } from 'react-icons/fa';
