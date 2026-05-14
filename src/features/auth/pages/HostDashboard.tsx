@@ -145,8 +145,8 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
         guests: editGuests ? Number(editGuests) : undefined,
         description: editDesc.trim() || undefined,
         amenities: editAmenities,
-        cleaningFee: editCleaningFee ? Number(editCleaningFee) : undefined,
-        minNights: editMinNights ? Number(editMinNights) : undefined,
+        cleaningFee: editCleaningFee !== '' ? Number(editCleaningFee) : undefined,
+        minNights: editMinNights !== '' ? Number(editMinNights) : undefined,
         instantBook: editInstant,
       },
       {
