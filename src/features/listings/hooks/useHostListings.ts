@@ -50,6 +50,13 @@ export interface HostListing {
   _count?: { bookings: number };
   latitude?: number | null;
   longitude?: number | null;
+  // optional enriched fields for edit form
+  description?: string;
+  guests?: number;
+  amenities?: string[];
+  rooms?: number;
+  beds?: number;
+  bathrooms?: number;
 }
 
 export function useHostListings(userId?: string) {
@@ -86,6 +93,17 @@ export function useUpdateListing() {
     onSuccess: (_data, vars) => {
       queryClient.invalidateQueries({ queryKey: ['host-listings'] });
       queryClient.invalidateQueries({ queryKey: ['listing', vars.id] });
+      queryClient.invalidateQueries({ queryKey: ['listings'] });
+    },
+  });
+}
+
+export function useDeleteListing() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`/listings/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['host-listings'] });
       queryClient.invalidateQueries({ queryKey: ['listings'] });
     },
   });

@@ -414,9 +414,8 @@ export default function ClassicSearchBar({
       </div>
 
       {/* ── SEARCH BTN ────────────────────────────────── */}
-      <button className="csb__btn" onClick={handleSearch}>
+      <button className="csb__btn" onClick={handleSearch} aria-label="Search">
         <FaSearch />
-        <span>Search</span>
       </button>
     </div>
   );

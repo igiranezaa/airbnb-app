@@ -84,22 +84,24 @@
 .csb__btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 14px 20px;
-  border-radius: 999px;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
   border: none;
   background: #ef4f38;
   color: #fff;
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 17px;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 0.15s;
-  font-family: inherit;
-  white-space: nowrap;
+  transition: background 0.15s, transform 0.15s;
+  margin-right: 4px;
 }
 
-.csb__btn:hover { background: #d43d27; }
+.csb__btn:hover {
+  background: #d43d27;
+  transform: scale(1.05);
+}
 
 /* ── Dropdown base ───────────────────────────────────────────── */
 .csb__dropdown {

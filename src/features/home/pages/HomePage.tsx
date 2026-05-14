@@ -45,8 +45,6 @@ function filterListings(listings: Listing[], query: string): Listing[] {
   });
 }
 
-type SearchMode = 'classic' | 'ai';
-
 interface SearchSectionProps {
   listings: Listing[];
   onAIResults: (query: string, results: Listing[]) => void;
@@ -54,7 +52,7 @@ interface SearchSectionProps {
 }
 
 function SearchSection({ listings, onAIResults, onClassicSearch }: SearchSectionProps) {
-  const [mode, setMode] = useState<SearchMode>('classic');
+  const [showAI, setShowAI] = useState(false);
   const [aiQuery, setAiQuery] = useState('');
   const [isThinking, setIsThinking] = useState(false);
 
@@ -66,8 +64,8 @@ function SearchSection({ listings, onAIResults, onClassicSearch }: SearchSection
     ];
   }, [listings]);
 
-  function handleAISearch(q?: string) {
-    const query = (q ?? aiQuery).trim();
+  function handleAISearch() {
+    const query = aiQuery.trim();
     if (!query) return;
     setIsThinking(true);
     setTimeout(() => {
@@ -79,26 +77,14 @@ function SearchSection({ listings, onAIResults, onClassicSearch }: SearchSection
 
   return (
     <div className="hp-search-section">
-      <div className="hp-search-tabs">
-        <button
-          className={`hp-search-tab${mode === 'classic' ? ' hp-search-tab--active' : ''}`}
-          onClick={() => setMode('classic')}
-        >
-          Search
-        </button>
-        <button
-          className={`hp-search-tab${mode === 'ai' ? ' hp-search-tab--active' : ''}`}
-          onClick={() => setMode('ai')}
-        >
-          <FaMagic /> AI Search
+      <ClassicSearchBar onSearch={onClassicSearch} suggestions={suggestions} />
+      <div className="hp-search-ai-row">
+        <button className="hp-search-ai-toggle" onClick={() => setShowAI((v) => !v)}>
+          <FaMagic /> {showAI ? 'Hide AI Search' : 'Try AI Search'}
         </button>
       </div>
-
-      {mode === 'classic' ? (
-        <ClassicSearchBar onSearch={onClassicSearch} suggestions={suggestions} />
-      ) : (
+      {showAI && (
         <div className="hp-ai-search">
-          <div className="hp-ai-search__glow" />
           <div className="hp-ai-search__inner">
             <div className="hp-ai-search__icon-wrap">
               <FaMagic className="hp-ai-search__icon" />
@@ -115,7 +101,7 @@ function SearchSection({ listings, onAIResults, onClassicSearch }: SearchSection
             </div>
             <button
               className={`hp-ai-search__btn${isThinking ? ' hp-ai-search__btn--thinking' : ''}`}
-              onClick={() => handleAISearch()}
+              onClick={handleAISearch}
               disabled={isThinking}
               aria-label="AI Search"
             >
@@ -130,9 +116,15 @@ function SearchSection({ listings, onAIResults, onClassicSearch }: SearchSection
   );
 }
 
+const TYPE_LABELS: Record<string, string> = {
+  APARTMENT: 'Apartment', HOUSE: 'House', VILLA: 'Villa', CABIN: 'Cabin',
+};
+
 function ListingCard({ listing }: { listing: Listing }) {
   const { state, dispatch } = useStore();
   const isSaved = state.saved.includes(listing.id);
+  const city = listing.location.split(',')[0].trim();
+  const typeLabel = TYPE_LABELS[listing.type] ?? listing.type;
 
   return (
     <Link to={`/listings/${listing.id}`} className="hp-card">
@@ -151,15 +143,12 @@ function ListingCard({ listing }: { listing: Listing }) {
         </button>
       </div>
       <div className="hp-card__info">
-        <div className="hp-card__top-row">
-          <span className="hp-card__title">{listing.title}</span>
-          <span className="hp-card__rating">
-            <FaStar className="hp-card__star" />
-            {listing.rating.toFixed(2)}
-          </span>
-        </div>
-        <p className="hp-card__price">
+        <span className="hp-card__title">{typeLabel} in {city}</span>
+        <p className="hp-card__meta">
           {numeral(listing.price * 2).format('$0,0')} for 2 nights
+          <span className="hp-card__dot">·</span>
+          <FaStar className="hp-card__star" />
+          {listing.rating.toFixed(2)}
         </p>
       </div>
     </Link>

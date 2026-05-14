@@ -10,7 +10,7 @@ import {
 import toast from 'react-hot-toast';
 import api from '../../../lib/axios';
 import { useAuth } from '../hooks/useAuth';
-import { useHostListings, useCreateListing, useUpdateListing, type HostListing, type CreateListingPayload } from '../../listings/hooks/useHostListings';
+import { useHostListings, useCreateListing, useUpdateListing, useDeleteListing, type HostListing, type CreateListingPayload } from '../../listings/hooks/useHostListings';
 import { useBookings, useUpdateBookingStatus } from '../../bookings/hooks/useBookings';
 import MessagesPanel from '../../bookings/components/MessagesPanel';
 import type { Booking } from '../../bookings/hooks/useBookings';
@@ -83,9 +83,23 @@ function HostOverview({ listings, bookings }: { listings: HostListing[]; booking
 
 function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoading: boolean }) {
   const { mutate: updateListing, isPending: isUpdating } = useUpdateListing();
+  const { mutate: deleteListing, isPending: isDeleting } = useDeleteListing();
+
+  // ── Edit state ──────────────────────────────────────────────────────────────
   const [editTarget, setEditTarget] = useState<HostListing | null>(null);
-  const [editLat, setEditLat] = useState('');
-  const [editLng, setEditLng] = useState('');
+  const [editTitle, setEditTitle] = useState('');
+  const [editType, setEditType] = useState('');
+  const [editLocation, setEditLocation] = useState('');
+  const [editPrice, setEditPrice] = useState('');
+  const [editGuests, setEditGuests] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [editAmenities, setEditAmenities] = useState<string[]>([]);
+  const [editCleaningFee, setEditCleaningFee] = useState('');
+  const [editMinNights, setEditMinNights] = useState('');
+  const [editInstant, setEditInstant] = useState(false);
+
+  // ── Delete confirm state ─────────────────────────────────────────────────────
+  const [deleteTarget, setDeleteTarget] = useState<HostListing | null>(null);
 
   function togglePublish(l: HostListing) {
     updateListing(
@@ -99,23 +113,55 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
 
   function openEdit(l: HostListing) {
     setEditTarget(l);
-    setEditLat(l.latitude != null ? String(l.latitude) : '');
-    setEditLng(l.longitude != null ? String(l.longitude) : '');
+    setEditTitle(l.title);
+    setEditType(l.type);
+    setEditLocation(l.location);
+    setEditPrice(String(l.pricePerNight));
+    setEditGuests(l.guests != null ? String(l.guests) : '');
+    setEditDesc(l.description ?? '');
+    setEditAmenities(l.amenities ?? []);
+    setEditCleaningFee(String(l.cleaningFee));
+    setEditMinNights(String(l.minNights));
+    setEditInstant(l.instantBook);
   }
 
-  function saveCoordinates() {
+  function toggleEditAmenity(a: string) {
+    setEditAmenities((prev) => prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]);
+  }
+
+  function saveEdit(e: React.FormEvent) {
+    e.preventDefault();
     if (!editTarget) return;
+    if (!editTitle.trim() || !editPrice || !editLocation.trim()) {
+      toast.error('Title, location and price are required.'); return;
+    }
     updateListing(
       {
         id: editTarget.id,
-        latitude: editLat ? Number(editLat) : undefined,
-        longitude: editLng ? Number(editLng) : undefined,
+        title: editTitle.trim(),
+        type: editType as CreateListingPayload['type'],
+        location: editLocation.trim(),
+        pricePerNight: Number(editPrice),
+        guests: editGuests ? Number(editGuests) : undefined,
+        description: editDesc.trim() || undefined,
+        amenities: editAmenities,
+        cleaningFee: editCleaningFee ? Number(editCleaningFee) : undefined,
+        minNights: editMinNights ? Number(editMinNights) : undefined,
+        instantBook: editInstant,
       },
       {
-        onSuccess: () => { toast.success('Coordinates saved!'); setEditTarget(null); },
-        onError: () => toast.error('Failed to save coordinates.'),
+        onSuccess: () => { toast.success('Listing updated!'); setEditTarget(null); },
+        onError: () => toast.error('Failed to update listing.'),
       }
     );
+  }
+
+  function confirmDelete() {
+    if (!deleteTarget) return;
+    deleteListing(deleteTarget.id, {
+      onSuccess: () => { toast.success(`"${deleteTarget.title}" deleted.`); setDeleteTarget(null); },
+      onError: () => toast.error('Failed to delete listing.'),
+    });
   }
 
   if (isLoading) return <Spinner />;
@@ -167,7 +213,7 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
                 </button>
                 <div className="db-listing-row__actions-icons">
                   <button aria-label={`Edit ${l.title}`} onClick={() => openEdit(l)}><FaEdit /></button>
-                  <button aria-label={`Delete ${l.title}`}><FaTrashAlt /></button>
+                  <button aria-label={`Delete ${l.title}`} onClick={() => setDeleteTarget(l)} style={{ color: '#e53e3e' }}><FaTrashAlt /></button>
                 </div>
               </div>
             </article>
@@ -175,34 +221,173 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
         </div>
       )}
 
+      {/* ── Edit listing modal ─────────────────────────────────────────────── */}
       {editTarget && (
         <div className="rbk-modal-overlay" onClick={() => setEditTarget(null)}>
+          <div className="rbk-modal rbk-modal--wide" onClick={(e) => e.stopPropagation()}>
+            <button className="rbk-modal__close" onClick={() => setEditTarget(null)} aria-label="Close"><FaTimes /></button>
+            <h3 className="rbk-modal__title">Edit Listing</h3>
+            <p style={{ fontSize: '0.8rem', color: '#888', marginBottom: '1.25rem' }}>ID: {editTarget.id}</p>
+
+            <form onSubmit={saveEdit}>
+              {/* Row 1: Title + Type */}
+              <div className="edit-listing-row">
+                <div className="edit-listing-field">
+                  <label className="edit-listing-label">Title <span className="al-req">*</span></label>
+                  <input
+                    className="al-input"
+                    type="text"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="edit-listing-field edit-listing-field--sm">
+                  <label className="edit-listing-label">Type</label>
+                  <select className="al-select" value={editType} onChange={(e) => setEditType(e.target.value)}>
+                    {LISTING_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 2: Location */}
+              <div className="edit-listing-field" style={{ marginBottom: '1rem' }}>
+                <label className="edit-listing-label">Location <span className="al-req">*</span></label>
+                <input
+                  className="al-input"
+                  type="text"
+                  value={editLocation}
+                  onChange={(e) => setEditLocation(e.target.value)}
+                  required
+                />
+              </div>
+
+              {/* Row 3: Price / Guests / Cleaning fee / Min nights */}
+              <div className="edit-listing-row">
+                <div className="edit-listing-field edit-listing-field--sm">
+                  <label className="edit-listing-label">Price / night ($) <span className="al-req">*</span></label>
+                  <input
+                    className="al-input"
+                    type="number"
+                    min="1"
+                    value={editPrice}
+                    onChange={(e) => setEditPrice(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="edit-listing-field edit-listing-field--sm">
+                  <label className="edit-listing-label">Max guests</label>
+                  <input
+                    className="al-input"
+                    type="number"
+                    min="1"
+                    max="20"
+                    value={editGuests}
+                    onChange={(e) => setEditGuests(e.target.value)}
+                  />
+                </div>
+                <div className="edit-listing-field edit-listing-field--sm">
+                  <label className="edit-listing-label">Cleaning fee ($)</label>
+                  <input
+                    className="al-input"
+                    type="number"
+                    min="0"
+                    value={editCleaningFee}
+                    onChange={(e) => setEditCleaningFee(e.target.value)}
+                  />
+                </div>
+                <div className="edit-listing-field edit-listing-field--sm">
+                  <label className="edit-listing-label">Min nights</label>
+                  <input
+                    className="al-input"
+                    type="number"
+                    min="1"
+                    value={editMinNights}
+                    onChange={(e) => setEditMinNights(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Instant book toggle */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', margin: '0.75rem 0 1rem' }}>
+                <input
+                  type="checkbox"
+                  id="edit-instant"
+                  checked={editInstant}
+                  onChange={(e) => setEditInstant(e.target.checked)}
+                  style={{ width: 16, height: 16, accentColor: '#ef4f38', cursor: 'pointer' }}
+                />
+                <label htmlFor="edit-instant" style={{ fontSize: '0.875rem', cursor: 'pointer' }}>Instant book</label>
+              </div>
+
+              {/* Description */}
+              <div className="edit-listing-field" style={{ marginBottom: '1rem' }}>
+                <label className="edit-listing-label">Description</label>
+                <textarea
+                  className="al-textarea"
+                  rows={4}
+                  maxLength={4000}
+                  value={editDesc}
+                  onChange={(e) => setEditDesc(e.target.value)}
+                />
+              </div>
+
+              {/* Amenities */}
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label className="edit-listing-label">Amenities</label>
+                <div className="al-amenities" style={{ marginTop: '0.5rem' }}>
+                  {AMENITIES_LIST.map((a) => {
+                    const on = editAmenities.includes(a);
+                    return (
+                      <label key={a} className="al-amenity">
+                        <span
+                          className={`al-amenity__box${on ? ' al-amenity__box--on' : ''}`}
+                          role="checkbox"
+                          aria-checked={on}
+                          tabIndex={0}
+                          onClick={() => toggleEditAmenity(a)}
+                          onKeyDown={(e) => e.key === 'Enter' && toggleEditAmenity(a)}
+                        />
+                        <span className="al-amenity__name">{a}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="rbk-modal__actions">
+                <button type="button" className="rbk-modal__btn rbk-modal__btn--cancel" onClick={() => setEditTarget(null)}>
+                  Cancel
+                </button>
+                <button type="submit" className="rbk-modal__btn rbk-modal__btn--confirm" disabled={isUpdating}>
+                  {isUpdating ? 'Saving…' : 'Save changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Delete confirmation modal ──────────────────────────────────────── */}
+      {deleteTarget && (
+        <div className="rbk-modal-overlay" onClick={() => setDeleteTarget(null)}>
           <div className="rbk-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="rbk-modal__close" onClick={() => setEditTarget(null)}><FaTimes /></button>
-            <p className="rbk-modal__title">Edit Coordinates</p>
-            <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '1rem' }}>{editTarget.title}</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.25rem' }}>
-              <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: 4 }}>Latitude</label>
-                <input
-                  type="number" step="any" placeholder="e.g. -1.6978"
-                  value={editLat} onChange={(e) => setEditLat(e.target.value)}
-                  style={{ width: '100%', padding: '0.5rem 0.75rem', border: '1px solid #ddd', borderRadius: 8, fontSize: '0.9rem' }}
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: 4 }}>Longitude</label>
-                <input
-                  type="number" step="any" placeholder="e.g. 29.2588"
-                  value={editLng} onChange={(e) => setEditLng(e.target.value)}
-                  style={{ width: '100%', padding: '0.5rem 0.75rem', border: '1px solid #ddd', borderRadius: 8, fontSize: '0.9rem' }}
-                />
-              </div>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-              <button className="rbk-btn rbk-btn--reject" onClick={() => setEditTarget(null)}>Cancel</button>
-              <button className="rbk-btn rbk-btn--approve" onClick={saveCoordinates} disabled={isUpdating}>
-                {isUpdating ? 'Saving…' : 'Save'}
+            <button className="rbk-modal__close" onClick={() => setDeleteTarget(null)} aria-label="Close"><FaTimes /></button>
+            <h3 className="rbk-modal__title">Delete Listing</h3>
+            <p className="rbk-modal__sub">
+              Are you sure you want to delete <strong>"{deleteTarget.title}"</strong>? This action cannot be undone and will also cancel any pending bookings.
+            </p>
+            <div className="rbk-modal__actions">
+              <button className="rbk-modal__btn rbk-modal__btn--cancel" onClick={() => setDeleteTarget(null)}>
+                Keep listing
+              </button>
+              <button
+                className="rbk-modal__btn rbk-modal__btn--confirm"
+                style={{ background: '#e53e3e' }}
+                onClick={confirmDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Deleting…' : 'Yes, delete'}
               </button>
             </div>
           </div>
