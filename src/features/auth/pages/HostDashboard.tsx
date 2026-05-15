@@ -28,6 +28,9 @@ const TYPE_LABELS: Record<string, string> = {
   APARTMENT: 'Apartment', HOUSE: 'House', VILLA: 'Villa', CABIN: 'Cabin',
 };
 
+const PHOTO_ACCEPT = 'image/jpeg,image/png,image/webp';
+const PHOTO_TYPES = new Set(PHOTO_ACCEPT.split(','));
+
 const visitorReviews = [
   { name: 'Carol Guest', avatar: 'https://i.pravatar.cc/96?img=23', date: '25 Oct 2023', rating: 4.5, text: 'Wonderful place, super clean and modern!', helpful: 12 },
   { name: 'David Guest', avatar: 'https://i.pravatar.cc/96?img=11', date: '20 Nov 2023', rating: 4, text: 'Great location and responsive host.', helpful: 8 },
@@ -141,12 +144,15 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
     if (!incoming) return;
     const MAX_SIZE = 20 * 1024 * 1024;
     const valid: File[] = [];
-    const rejected: string[] = [];
+    const tooLarge: string[] = [];
+    const unsupported: string[] = [];
     Array.from(incoming).forEach((file) => {
-      if (file.size > MAX_SIZE) rejected.push(file.name);
+      if (!PHOTO_TYPES.has(file.type)) unsupported.push(file.name);
+      else if (file.size > MAX_SIZE) tooLarge.push(file.name);
       else valid.push(file);
     });
-    if (rejected.length) toast.error(`Skipped ${rejected.length} file(s) over 20 MB.`);
+    if (unsupported.length) toast.error('Only JPG, PNG, and WebP photos are supported.');
+    if (tooLarge.length) toast.error(`Skipped ${tooLarge.length} file(s) over 20 MB.`);
     setEditPhotoFiles((prev) => [...prev, ...valid]);
     setEditPhotoPreviews((prev) => [...prev, ...valid.map((file) => URL.createObjectURL(file))]);
   }
@@ -168,7 +174,7 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
     for (let i = 0; i < editPhotoFiles.length; i += 5) {
       const form = new FormData();
       editPhotoFiles.slice(i, i + 5).forEach((file) => form.append('images', file));
-      await api.post(`/listings/${listingId}/photos`, form, { headers: { 'Content-Type': 'multipart/form-data' } });
+      await api.post(`/listings/${listingId}/photos`, form);
     }
   }
 
@@ -182,8 +188,8 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
     if (!editTitle.trim() || !editPrice || !editLocation.trim()) {
       toast.error('Title, location and price are required.'); return;
     }
-    if (editPhotos.length + editPhotoFiles.length === 0) {
-      toast.error('Please keep or upload at least one listing photo.'); return;
+    if (editPhotos.length + editPhotoFiles.length < 5) {
+      toast.error('Please keep or upload at least 5 listing photos.'); return;
     }
     updateListing(
       {
@@ -385,7 +391,7 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
                   <input
                     ref={editFileRef}
                     type="file"
-                    accept="image/jpeg,image/png,image/heic,image/webp"
+                    accept={PHOTO_ACCEPT}
                     multiple
                     hidden
                     onChange={(e) => {
@@ -395,7 +401,7 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
                   />
                 </div>
                 <p className="edit-listing-photos__hint">
-                  Existing photos stay in order. Remove photos you do not want, then add new ones.
+                  Keep at least 5 photos. Existing photos stay in order; remove photos you do not want, then add new ones.
                 </p>
                 <div className="edit-listing-photos__grid">
                   {editPhotos.map((src, index) => (
@@ -804,7 +810,9 @@ function AddListingForm({ userId, onSuccess }: { userId: string; onSuccess: () =
   }
   function addFiles(incoming: FileList | null) {
     if (!incoming) return;
-    const toAdd = Array.from(incoming).slice(0, 10 - photoFiles.length);
+    const valid = Array.from(incoming).filter((file) => PHOTO_TYPES.has(file.type));
+    if (valid.length !== incoming.length) toast.error('Only JPG, PNG, and WebP photos are supported.');
+    const toAdd = valid.slice(0, 10 - photoFiles.length);
     setPhotoFiles((p) => [...p, ...toAdd]);
     setPreviews((p) => [...p, ...toAdd.map((f) => URL.createObjectURL(f))]);
   }
@@ -817,7 +825,7 @@ function AddListingForm({ userId, onSuccess }: { userId: string; onSuccess: () =
     for (let i = 0; i < photoFiles.length; i += 5) {
       const form = new FormData();
       photoFiles.slice(i, i + 5).forEach((f) => form.append('images', f));
-      await api.post(`/listings/${listingId}/photos`, form, { headers: { 'Content-Type': 'multipart/form-data' } });
+      await api.post(`/listings/${listingId}/photos`, form);
     }
   }
   function toggleAmenity(a: string) { setAmenities((p) => p.includes(a) ? p.filter((x) => x !== a) : [...p, a]); }

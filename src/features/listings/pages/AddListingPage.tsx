@@ -15,6 +15,9 @@ import { useCreateListing } from '../hooks/useHostListings';
 import type { CancellationPolicy } from '../types';
 import './AddListingPage.css';
 
+const PHOTO_ACCEPT = 'image/jpeg,image/png,image/webp';
+const PHOTO_TYPES = new Set(PHOTO_ACCEPT.split(','));
+
 const CATEGORIES = [
   { value: 'APARTMENT', label: 'Apartment' },
   { value: 'HOUSE', label: 'House' },
@@ -204,12 +207,15 @@ export default function AddListingPage() {
     if (!incoming) return;
     const MAX_SIZE = 20 * 1024 * 1024; // 20 MB
     const valid: File[] = [];
-    const rejected: string[] = [];
+    const tooLarge: string[] = [];
+    const unsupported: string[] = [];
     Array.from(incoming).forEach((f) => {
-      if (f.size > MAX_SIZE) rejected.push(f.name);
+      if (!PHOTO_TYPES.has(f.type)) unsupported.push(f.name);
+      else if (f.size > MAX_SIZE) tooLarge.push(f.name);
       else valid.push(f);
     });
-    if (rejected.length) toast.error(`Skipped ${rejected.length} file(s) over 20 MB: ${rejected.join(', ')}`);
+    if (unsupported.length) toast.error('Only JPG, PNG, and WebP photos are supported.');
+    if (tooLarge.length) toast.error(`Skipped ${tooLarge.length} file(s) over 20 MB: ${tooLarge.join(', ')}`);
     const toAdd = valid.slice(0, 100 - files.length);
     setFiles((p) => [...p, ...toAdd]);
     setPreviews((p) => [...p, ...toAdd.map((f) => URL.createObjectURL(f))]);
@@ -226,9 +232,7 @@ export default function AddListingPage() {
     for (let i = 0; i < files.length; i += 5) {
       const form = new FormData();
       files.slice(i, i + 5).forEach((f) => form.append('images', f));
-      await api.post(`/listings/${listingId}/photos`, form, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      await api.post(`/listings/${listingId}/photos`, form);
     }
   }
 
@@ -554,7 +558,7 @@ export default function AddListingPage() {
           {/* ─ 04 Gallery (FR-015) ─ */}
           <div className="al-card">
             <SectionHeader num="04/" icon={<FaImages />} title="Gallery"
-              desc="Add up to 100 photos (JPEG/PNG/HEIC). Max 20 MB per image. First photo is the cover." />
+              desc="Add up to 100 photos (JPG/PNG/WebP). Max 20 MB per image. First photo is the cover." />
             <div className="al-fields">
               <div className="al-field al-field--full">
                 <div
@@ -581,7 +585,7 @@ export default function AddListingPage() {
                       ))}
                     </div>
                   )}
-                  <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/heic,image/webp" multiple hidden
+                  <input ref={fileRef} type="file" accept={PHOTO_ACCEPT} multiple hidden
                     onChange={(e) => addFiles(e.target.files)} />
                 </div>
                 <p className="al-hint">Drag & drop or click to upload · Max 100 photos · Max 20 MB each · {previews.length}/100</p>
