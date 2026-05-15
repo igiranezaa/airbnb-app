@@ -68,11 +68,23 @@ function ListingRow({
 }: RowComponentProps<ListingRowProps>) {
   const rowItems = rows[index];
   return (
-    <div {...ariaAttributes} style={{ ...style, display: 'flex', gap: CARD_GAP, paddingBottom: CARD_GAP }}>
+    <div
+      {...ariaAttributes}
+      className={`listings-row${listMode ? ' listings-row--list' : ' listings-row--grid'}`}
+      style={{ ...style, display: 'flex', gap: CARD_GAP, paddingBottom: CARD_GAP }}
+    >
       {rowItems.map((listing) => (
         <div
           key={listing.id}
-          style={{ width: columnWidth, flexShrink: 0, outline: listing.id === hoveredId ? '2px solid #ef4f38' : 'none', borderRadius: 12, transition: 'outline 0.15s' }}
+          className="listings-row__item"
+          style={{
+            width: listMode ? '100%' : columnWidth,
+            height: listMode ? LIST_ROW_HEIGHT - CARD_GAP : GRID_ROW_HEIGHT - CARD_GAP,
+            flexShrink: 0,
+            outline: listing.id === hoveredId ? '2px solid #ef4f38' : 'none',
+            borderRadius: 8,
+            transition: 'outline 0.15s',
+          }}
           onMouseEnter={() => onHoverListing(listing.id)}
           onMouseLeave={() => onHoverListing(null)}
         >
@@ -82,7 +94,7 @@ function ListingRow({
               <Card.Badge />
               <Card.Title />
               <Card.Location />
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
+              <div className="card__footer-row">
                 <Card.Price />
                 <Card.Rating />
               </div>

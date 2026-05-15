@@ -356,6 +356,15 @@ html.dark .saved-panel__close:hover {
 .card__star { color: #f59e0b; }
 .card__review-count { font-weight: 400; color: #888; }
 
+.card__footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  min-width: 0;
+}
+
 .card--list {
   flex-direction: row;
   height: 156px;
