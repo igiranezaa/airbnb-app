@@ -719,7 +719,7 @@ function AddListingForm({ userId, onSuccess }: { userId: string; onSuccess: () =
     }
     const location = [address, apt, city, stateVal, zip, country].filter(Boolean).join(', ');
     createListing(
-      { title: listingTitle.trim(), description: description.trim(), location, pricePerNight, guests: Number(guests), type: category as CreateListingPayload['type'], amenities },
+      { title: listingTitle.trim(), description: description.trim(), location, pricePerNight, guests: Number(guests), type: category as CreateListingPayload['type'], amenities, published: true },
       {
         onSuccess: async (response) => {
           const listingId = response.data.id;

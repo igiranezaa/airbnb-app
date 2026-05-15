@@ -1,6 +1,6 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaChevronLeft, FaChevronRight, FaHeart, FaMagic, FaSearch, FaStar, FaTimes } from 'react-icons/fa';
+import { FaHeart, FaMagic, FaSearch, FaStar, FaTimes } from 'react-icons/fa';
 import { useListings } from '../../listings/hooks/useListings';
 import { useStore } from '../../../store/StoreContext';
 import type { Listing } from '../../listings/types';
@@ -150,12 +150,6 @@ function ListingCard({ listing }: { listing: Listing }) {
 }
 
 function ListingSection({ title, listings }: { title: string; listings: Listing[] }) {
-  const trackRef = useRef<HTMLDivElement>(null);
-
-  function scroll(dir: 'left' | 'right') {
-    trackRef.current?.scrollBy({ left: dir === 'left' ? -640 : 640, behavior: 'smooth' });
-  }
-
   return (
     <section className="hp-section">
       <div className="hp-section__head">
@@ -163,16 +157,8 @@ function ListingSection({ title, listings }: { title: string; listings: Listing[
           {title}
           <span className="hp-section__arrow-icon">→</span>
         </h2>
-        <div className="hp-section__nav">
-          <button className="hp-section__nav-btn" onClick={() => scroll('left')} aria-label="Scroll left">
-            <FaChevronLeft />
-          </button>
-          <button className="hp-section__nav-btn" onClick={() => scroll('right')} aria-label="Scroll right">
-            <FaChevronRight />
-          </button>
-        </div>
       </div>
-      <div className="hp-section__track" ref={trackRef}>
+      <div className="hp-section__track">
         {listings.map((l) => (
           <ListingCard key={l.id} listing={l} />
         ))}
