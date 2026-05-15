@@ -4,6 +4,7 @@ import { useStore } from '../../../store/StoreContext';
 import { useListings } from '../hooks/useListings';
 import { List } from '../../../shared/components/List';
 import type { Listing } from '../types';
+import { getFallbackPhoto } from '../utils/photos';
 import './SavedListings.css';
 
 interface Props {
@@ -38,7 +39,14 @@ export default function SavedListings({ open, onClose }: Props) {
             className="saved-panel__list"
             renderItem={(l) => (
               <div className="saved-panel__item">
-                <img src={l.img} alt={l.title} className="saved-panel__thumb" />
+                <img
+                  src={l.img}
+                  alt={l.title}
+                  className="saved-panel__thumb"
+                  onError={(e) => {
+                    e.currentTarget.src = getFallbackPhoto(l.category);
+                  }}
+                />
                 <div className="saved-panel__info">
                   <p className="saved-panel__item-title">{l.title}</p>
                   <p className="saved-panel__item-location">{l.location}</p>

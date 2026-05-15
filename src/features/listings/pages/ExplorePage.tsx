@@ -11,6 +11,7 @@ import { useFavorites } from '../hooks/useFavorites';
 import SearchBar from '../components/SearchBar';
 import Spinner from '../../../shared/components/Spinner';
 import type { Listing } from '../types';
+import { getFallbackPhoto } from '../utils/photos';
 import './ExplorePage.css';
 
 // Fix Leaflet's broken default icon paths when bundled with Vite
@@ -82,7 +83,14 @@ function ExploreCard({
       onMouseLeave={() => onHover(null)}
     >
       <div className="explore-card__img-wrap">
-        <img src={listing.img} alt={listing.title} className="explore-card__img" />
+        <img
+          src={listing.img}
+          alt={listing.title}
+          className="explore-card__img"
+          onError={(e) => {
+            e.currentTarget.src = getFallbackPhoto(listing.category);
+          }}
+        />
         <span className="explore-card__featured"><FaStar /> Featured</span>
         <span className="explore-card__discount">$100 off $399: eblwc</span>
         <button
@@ -230,7 +238,14 @@ export default function ExplorePage() {
               >
                 <Popup maxWidth={220}>
                   <div className="explore-popup">
-                    <img src={listing.img} alt={listing.title} className="explore-popup__img" />
+                    <img
+                      src={listing.img}
+                      alt={listing.title}
+                      className="explore-popup__img"
+                      onError={(e) => {
+                        e.currentTarget.src = getFallbackPhoto(listing.category);
+                      }}
+                    />
                     <div className="explore-popup__body">
                       <p className="explore-popup__title">{listing.title}</p>
                       <p className="explore-popup__loc"><FaMapMarkerAlt /> {listing.location}</p>

@@ -15,6 +15,7 @@ import { useAuth } from '../../auth/hooks/useAuth';
 import { BookingForm } from '../../bookings';
 import MessagesPanel from '../../bookings/components/MessagesPanel';
 import Spinner from '../../../shared/components/Spinner';
+import { getFallbackPhoto, getListingPhotos } from '../utils/photos';
 import './ListingDetail.css';
 
 const POLICY_LABELS: Record<string, string> = {
@@ -89,7 +90,7 @@ export default function ListingDetail() {
     description = '',
   } = listing;
 
-  const allPhotos = photos.length ? photos : [img];
+  const allPhotos = getListingPhotos(category, photos, img);
 
   function submitReview(e: React.FormEvent) {
     e.preventDefault();
@@ -111,6 +112,9 @@ export default function ListingDetail() {
             src={allPhotos[photoIdx]}
             alt={`${title} photo ${photoIdx + 1}`}
             className="detail-gallery__main"
+            onError={(e) => {
+              e.currentTarget.src = getFallbackPhoto(category, photoIdx);
+            }}
           />
           {allPhotos.length > 1 && (
             <div className="detail-gallery__thumbs">
@@ -120,7 +124,13 @@ export default function ListingDetail() {
                   className={`detail-gallery__thumb${i === photoIdx ? ' detail-gallery__thumb--active' : ''}`}
                   onClick={() => setPhotoIdx(i)}
                 >
-                  <img src={src} alt="" />
+                  <img
+                    src={src}
+                    alt=""
+                    onError={(e) => {
+                      e.currentTarget.src = getFallbackPhoto(category, i);
+                    }}
+                  />
                 </button>
               ))}
               {allPhotos.length > 8 && (

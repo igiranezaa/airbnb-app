@@ -1,4 +1,5 @@
 import type { Listing } from '../features/listings/types';
+import { getFallbackPhoto, getListingPhotos } from '../features/listings/utils/photos';
 
 // Mock data — sparse objects cast via unknown; missing fields are undefined at runtime.
 const listings = [
@@ -65,4 +66,11 @@ const listings = [
   { id: '50', title: 'Carpathian Forest Cabin',     location: 'Transylvania, Romania',       price: 110, rating: 4.70, superhost: false, available: true,  availableFrom: '2025-03-28', img: 'https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=400&h=260&fit=crop', category: 'mountain',    lat: 46.7690,  lng: 23.5900   },
 ] as unknown as Listing[];
 
-export default listings;
+export default listings.map((listing) => {
+  const photos = getListingPhotos(listing.category, listing.photos, listing.img);
+  return {
+    ...listing,
+    img: photos[0] ?? getFallbackPhoto(listing.category),
+    photos,
+  };
+});

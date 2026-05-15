@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { FaHeart, FaRegHeart, FaStar, FaMapMarkerAlt, FaTag, FaCheckCircle, FaArrowRight, FaPhone } from 'react-icons/fa';
 import numeral from 'numeral';
 import type { Listing } from '../types';
+import { getFallbackPhoto } from '../utils/photos';
 import styles from './ListingCard.module.css';
 
 interface Props {
@@ -29,7 +30,14 @@ const ListingCard = memo(function ListingCard({ listing, saved, onToggleSave, li
       transition={{ duration: 0.35, ease: 'easeOut' }}
     >
       <div className={styles.imageWrapper}>
-        <img src={img} alt={title} className={styles.image} />
+        <img
+          src={img}
+          alt={title}
+          className={styles.image}
+          onError={(e) => {
+            e.currentTarget.src = getFallbackPhoto(listing.category);
+          }}
+        />
 
         <div className={styles.overlayBadges}>
           <span className={styles.featuredBadge}><FaStar /> Featured</span>

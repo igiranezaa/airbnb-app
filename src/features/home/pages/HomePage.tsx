@@ -6,6 +6,7 @@ import { useStore } from '../../../store/StoreContext';
 import type { Listing } from '../../listings/types';
 import numeral from 'numeral';
 import ClassicSearchBar, { type ClassicSearchParams, type Destination } from '../components/ClassicSearchBar';
+import { getFallbackPhoto } from '../../listings/utils/photos';
 import './HomePage.css';
 
 function extractCity(location: string): string {
@@ -123,7 +124,15 @@ function ListingCard({ listing }: { listing: Listing }) {
   return (
     <Link to={`/listings/${listing.id}`} className="hp-card">
       <div className="hp-card__img-wrap">
-        <img src={listing.img} alt={listing.title} className="hp-card__img" loading="lazy" />
+        <img
+          src={listing.img}
+          alt={listing.title}
+          className="hp-card__img"
+          loading="lazy"
+          onError={(e) => {
+            e.currentTarget.src = getFallbackPhoto(listing.category);
+          }}
+        />
         <span className="hp-card__badge">Guest favorite</span>
         <button
           className={`hp-card__heart${isSaved ? ' hp-card__heart--saved' : ''}`}

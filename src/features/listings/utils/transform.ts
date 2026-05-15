@@ -1,5 +1,5 @@
 import type { Listing, ListingType, ListingCategory, CancellationPolicy } from '../types';
-import { getListingPhotos } from './photos';
+import { getFallbackPhoto, getListingPhotos } from './photos';
 
 export interface BackendListing {
   id: string;
@@ -105,7 +105,7 @@ export function transformListing(b: BackendListing): Listing {
     superhost: b.superhost ?? false,
     available: true,
     availableFrom: b.createdAt.slice(0, 10),
-    img: photos[0] ?? CATEGORY_IMAGES[category],
+    img: photos[0] ?? getFallbackPhoto(category) ?? CATEGORY_IMAGES[category],
     photos,
     category,
     rooms: b.rooms ?? 1,

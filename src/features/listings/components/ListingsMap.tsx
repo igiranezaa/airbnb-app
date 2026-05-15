@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import { FaStar } from 'react-icons/fa';
 import type { Listing } from '../types';
 import numeral from 'numeral';
+import { getFallbackPhoto } from '../utils/photos';
 
 // Fix Leaflet broken default icons in Vite
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
@@ -72,7 +73,14 @@ export default function ListingsMap({
         >
           <Popup className="lmap-popup-wrap" maxWidth={220}>
             <Link to={`/listings/${listing.id}`} className="lmap-popup">
-              <img src={listing.img} alt={listing.title} className="lmap-popup__img" />
+              <img
+                src={listing.img}
+                alt={listing.title}
+                className="lmap-popup__img"
+                onError={(e) => {
+                  e.currentTarget.src = getFallbackPhoto(listing.category);
+                }}
+              />
               <div className="lmap-popup__body">
                 <p className="lmap-popup__title">{listing.title}</p>
                 <p className="lmap-popup__meta">

@@ -42,7 +42,7 @@ function isUsablePhoto(url: string | null | undefined): url is string {
 
 export function getFallbackPhoto(category: ListingCategory, index = 0): string {
   const photos = CATEGORY_PHOTOS[category] ?? CATEGORY_PHOTOS.city;
-  return photos[index % photos.length];
+  return photos[index % photos.length] ?? 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop';
 }
 
 export function getListingPhotos(
