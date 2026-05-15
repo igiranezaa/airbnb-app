@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaChevronLeft, FaChevronRight, FaHeart, FaMagic, FaStar, FaTimes } from 'react-icons/fa';
+import { FaChevronLeft, FaChevronRight, FaHeart, FaMagic, FaSearch, FaStar, FaTimes } from 'react-icons/fa';
 import { useListings } from '../../listings/hooks/useListings';
 import { useStore } from '../../../store/StoreContext';
 import type { Listing } from '../../listings/types';
@@ -116,15 +116,9 @@ function SearchSection({ listings, onAIResults, onClassicSearch }: SearchSection
   );
 }
 
-const TYPE_LABELS: Record<string, string> = {
-  APARTMENT: 'Apartment', HOUSE: 'House', VILLA: 'Villa', CABIN: 'Cabin',
-};
-
 function ListingCard({ listing }: { listing: Listing }) {
   const { state, dispatch } = useStore();
   const isSaved = state.saved.includes(listing.id);
-  const city = listing.location.split(',')[0].trim();
-  const typeLabel = TYPE_LABELS[listing.type] ?? listing.type;
 
   return (
     <Link to={`/listings/${listing.id}`} className="hp-card">
@@ -143,7 +137,7 @@ function ListingCard({ listing }: { listing: Listing }) {
         </button>
       </div>
       <div className="hp-card__info">
-        <span className="hp-card__title">{typeLabel} in {city}</span>
+        <span className="hp-card__title">{listing.title}</span>
         <p className="hp-card__meta">
           {numeral(listing.price * 2).format('$0,0')} for 2 nights
           <span className="hp-card__dot">·</span>
@@ -187,7 +181,19 @@ function ListingSection({ title, listings }: { title: string; listings: Listing[
   );
 }
 
-function AIResultsSection({ query, results, onClear }: { query: string; results: Listing[]; onClear: () => void }) {
+function AIResultsSection({
+  query,
+  results,
+  onClear,
+  onSuggestion,
+}: {
+  query: string;
+  results: Listing[];
+  onClear: () => void;
+  onSuggestion: (query: string) => void;
+}) {
+  const suggestions = ['Kigali city stay', 'cozy cabin', 'beach house', 'mountain view'];
+
   return (
     <section className="hp-ai-results">
       <div className="hp-ai-results__head">
@@ -201,7 +207,25 @@ function AIResultsSection({ query, results, onClear }: { query: string; results:
         </button>
       </div>
       {results.length === 0 ? (
-        <p className="hp-ai-results__empty">No listings matched your description. Try different keywords.</p>
+        <div className="hp-ai-empty">
+          <div className="hp-ai-empty__icon">
+            <FaSearch />
+          </div>
+          <h3 className="hp-ai-empty__title">No stays matched that search</h3>
+          <p className="hp-ai-empty__copy">
+            Try a destination, stay type, amenity, or price hint. Short phrases work best.
+          </p>
+          <div className="hp-ai-empty__chips" aria-label="Suggested AI searches">
+            {suggestions.map((item) => (
+              <button key={item} type="button" className="hp-ai-empty__chip" onClick={() => onSuggestion(item)}>
+                {item}
+              </button>
+            ))}
+          </div>
+          <button className="hp-ai-empty__reset" type="button" onClick={onClear}>
+            Browse all stays
+          </button>
+        </div>
       ) : (
         <div className="hp-ai-results__grid">
           {results.map((l) => (
@@ -226,6 +250,10 @@ export default function HomePage() {
     setTimeout(() => {
       document.getElementById('hp-results')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 50);
+  }
+
+  function handleAISuggestion(query: string) {
+    handleAIResults(query, filterListings(listings, query));
   }
 
   function handleClassicSearch(params: ClassicSearchParams) {
@@ -270,7 +298,7 @@ export default function HomePage() {
       )}
       <div className="hp-content" id="hp-results">
         {aiResults !== null ? (
-          <AIResultsSection query={aiQueryText} results={aiResults} onClear={clearAIResults} />
+          <AIResultsSection query={aiQueryText} results={aiResults} onClear={clearAIResults} onSuggestion={handleAISuggestion} />
         ) : classicQuery && displayedListings.length === 0 ? (
           <div className="hp-no-results">
             <span className="hp-no-results__icon">🔍</span>

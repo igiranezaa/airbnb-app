@@ -4,24 +4,94 @@ import {
   FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn, FaLock,
 } from 'react-icons/fa';
 import { useAuth } from '../hooks/useAuth';
+import { saveProfileAvatar } from '../../../shared/hooks/useProfileAvatar';
 import toast from 'react-hot-toast';
 import './EditProfileSection.css';
 
+const profileMediaKey = (email: string, kind: 'avatar' | 'cover') =>
+  `liston:profile-media:${email || 'guest'}:${kind}`;
+const profileDetailsKey = (email: string) => `liston:profile-details:${email || 'guest'}`;
+const MAX_PROFILE_IMAGE_BYTES = 2 * 1024 * 1024;
+
+interface StoredProfileDetails {
+  name: string;
+  phone: string;
+  description: string;
+  facebook: string;
+  twitter: string;
+  instagram: string;
+  linkedin: string;
+}
+
+const EMPTY_PROFILE_DETAILS: StoredProfileDetails = {
+  name: '',
+  phone: '',
+  description: '',
+  facebook: '',
+  twitter: '',
+  instagram: '',
+  linkedin: '',
+};
+
+function readStoredImage(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function readStoredProfileDetails(email: string): StoredProfileDetails {
+  try {
+    const raw = localStorage.getItem(profileDetailsKey(email));
+    return raw ? { ...EMPTY_PROFILE_DETAILS, ...JSON.parse(raw) as Partial<StoredProfileDetails> } : EMPTY_PROFILE_DETAILS;
+  } catch {
+    return EMPTY_PROFILE_DETAILS;
+  }
+}
+
+function readImageFile(file: File, onLoad: (src: string) => void) {
+  const reader = new FileReader();
+  reader.onload = () => onLoad(String(reader.result));
+  reader.readAsDataURL(file);
+}
+
+function saveStoredImage(key: string, src: string): boolean {
+  try {
+    localStorage.setItem(key, src);
+    if (key.endsWith(':avatar')) {
+      const email = key.replace('liston:profile-media:', '').replace(':avatar', '');
+      saveProfileAvatar(email, src);
+    }
+    window.dispatchEvent(new CustomEvent('liston:profile-media-updated'));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function validateImageFile(file: File): boolean {
+  if (file.size <= MAX_PROFILE_IMAGE_BYTES) return true;
+  toast.error('That picture is too large. Please choose an image under 2 MB.');
+  return false;
+}
+
 export default function EditProfileSection() {
   const { userName, userEmail, userRole, updateLocalName } = useAuth();
+  const storedProfile = readStoredProfileDetails(userEmail);
 
-  const [name, setName]           = useState(userName || '');
-  const [phone, setPhone]         = useState('');
-  const [description, setDesc]    = useState('');
-  const [facebook, setFacebook]   = useState('');
-  const [twitter, setTwitter]     = useState('');
-  const [instagram, setInstagram] = useState('');
-  const [linkedin, setLinkedin]   = useState('');
+  const [name, setName]           = useState(storedProfile.name || userName || '');
+  const [phone, setPhone]         = useState(storedProfile.phone);
+  const [description, setDesc]    = useState(storedProfile.description);
+  const [facebook, setFacebook]   = useState(storedProfile.facebook);
+  const [twitter, setTwitter]     = useState(storedProfile.twitter);
+  const [instagram, setInstagram] = useState(storedProfile.instagram);
+  const [linkedin, setLinkedin]   = useState(storedProfile.linkedin);
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw]         = useState('');
   const [confirmPw, setConfirmPw] = useState('');
-  const [coverSrc, setCoverSrc]   = useState<string | null>(null);
-  const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
+  const [coverSrc, setCoverSrc]   = useState<string | null>(() => readStoredImage(profileMediaKey(userEmail, 'cover')));
+  const [avatarSrc, setAvatarSrc] = useState<string | null>(() => readStoredImage(profileMediaKey(userEmail, 'avatar')));
 
   const coverRef  = useRef<HTMLInputElement>(null);
   const avatarRef = useRef<HTMLInputElement>(null);
@@ -31,18 +101,54 @@ export default function EditProfileSection() {
 
   function handleCover(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
-    if (f) setCoverSrc(URL.createObjectURL(f));
+    e.target.value = '';
+    if (f && !validateImageFile(f)) return;
+    if (f) {
+      readImageFile(f, (src) => {
+        setCoverSrc(src);
+        if (!saveStoredImage(profileMediaKey(userEmail, 'cover'), src)) {
+          toast.error('This image is too large to store locally.');
+        }
+      });
+    }
   }
 
   function handleAvatar(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
-    if (f) setAvatarSrc(URL.createObjectURL(f));
+    e.target.value = '';
+    if (f && !validateImageFile(f)) return;
+    if (f) {
+      readImageFile(f, (src) => {
+        setAvatarSrc(src);
+        if (!saveStoredImage(profileMediaKey(userEmail, 'avatar'), src)) {
+          toast.error('This image is too large to store locally.');
+        }
+      });
+    }
   }
 
   function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) { toast.error('Name is required'); return; }
-    updateLocalName(name.trim());
+    const profile: StoredProfileDetails = {
+      name: name.trim(),
+      phone,
+      description,
+      facebook,
+      twitter,
+      instagram,
+      linkedin,
+    };
+    localStorage.setItem(profileDetailsKey(userEmail), JSON.stringify(profile));
+    updateLocalName(profile.name);
+    if (coverSrc && !saveStoredImage(profileMediaKey(userEmail, 'cover'), coverSrc)) {
+      toast.error('Header image is too large to store locally.');
+      return;
+    }
+    if (avatarSrc && !saveStoredImage(profileMediaKey(userEmail, 'avatar'), avatarSrc)) {
+      toast.error('Profile image is too large to store locally.');
+      return;
+    }
     toast.success('Profile saved!');
   }
 

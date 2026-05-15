@@ -905,37 +905,6 @@
   }
 }
 
-/* ── Date / guest search bar (FR-025) ─────────────────────────── */
-.listings-date-bar {
-  display: flex;
-  align-items: flex-end;
-  gap: 12px;
-  padding: 14px 24px;
-  background: #fff;
-  border-bottom: 1px solid #ebebeb;
-  flex-wrap: wrap;
-}
-.ldb-group { display: flex; flex-direction: column; gap: 4px; }
-.ldb-group--guests { min-width: 80px; }
-.ldb-label { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.05em; }
-.ldb-input {
-  height: 38px; padding: 0 10px; border: 1.5px solid #e0e0e0;
-  border-radius: 8px; font-size: 14px; font-family: inherit;
-  outline: none; background: #fff; transition: border-color 0.15s;
-}
-.ldb-input:focus { border-color: #ef4f38; }
-.ldb-clear {
-  display: inline-flex; align-items: center; gap: 5px;
-  height: 38px; padding: 0 12px; border-radius: 8px;
-  background: #fce4e4; color: #c62828; border: none; cursor: pointer;
-  font-size: 13px; font-weight: 600; font-family: inherit;
-  transition: background 0.15s;
-}
-.ldb-clear:hover { background: #f5c6c6; }
-
-/* ── Date badge in count ──────────────────────────────────────── */
-.listings-count__dates { color: #ef4f38; font-weight: 600; }
-
 /* ── Sidebar: amenities ──────────────────────────────────────── */
 .sidebar-amenities { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
 .sidebar-amenity-label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
@@ -958,8 +927,7 @@ html.dark .listings-sidebar { background: #161b22; border-color: #30363d; }
 html.dark .sidebar-section { border-color: #30363d; }
 html.dark .sidebar-title { color: #e6edf3; }
 html.dark .sidebar-desc { color: #8b949e; }
-html.dark .sidebar-select,
-html.dark .ldb-input { background: #21262d; color: #e6edf3; border-color: #30363d; }
+html.dark .sidebar-select { background: #21262d; color: #e6edf3; border-color: #30363d; }
 html.dark .sidebar-price-tag { background: #21262d; color: #e6edf3; border-color: #30363d; }
 html.dark .sidebar-category-name { color: #e6edf3; }
 html.dark .sidebar-category-count { color: #8b949e; }
@@ -968,8 +936,6 @@ html.dark .sidebar-amenity-label { color: #8b949e; }
 html.dark .listings-content { background: #0d1117; }
 html.dark .listings-grid-toggle-btn { background: #21262d; color: #e6edf3; border-color: #30363d; }
 html.dark .listings-grid-toggle-btn--active { background: #ef4f38; color: #fff; }
-html.dark .ldb-clear { background: #2a1010; color: #f87171; }
-html.dark .listings-count__dates { color: #ef4f38; }
 html.dark .listings-panel { background: #0d1117; }
 html.dark .listings-map-panel { border-left-color: #30363d; }
 html.dark .listings-filter-btn,

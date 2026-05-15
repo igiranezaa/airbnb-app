@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { FaCalendar, FaChevronLeft, FaChevronRight, FaMinus, FaPlus, FaSearch } from 'react-icons/fa';
+import { FaChevronLeft, FaChevronRight, FaMinus, FaPlus, FaSearch } from 'react-icons/fa';
 import './ClassicSearchBar.css';
 
 // ── Data ──────────────────────────────────────────────────────
@@ -18,15 +18,6 @@ const MONTH_NAMES = [
   'July','August','September','October','November','December',
 ];
 const DAY_ABBR = ['Su','Mo','Tu','We','Th','Fr','Sa'];
-const FLEX_DURATIONS = ['Weekend','Week','Month'];
-const FLEX_OPTIONS = [
-  { label: 'Exact dates', value: 'exact' },
-  { label: '± 1 day',    value: '1'     },
-  { label: '± 2 days',   value: '2'     },
-  { label: '± 3 days',   value: '3'     },
-  { label: '± 7 days',   value: '7'     },
-  { label: '± 14 days',  value: '14'    },
-];
 
 // ── Date helpers ──────────────────────────────────────────────
 function sameDay(a: Date, b: Date) {
@@ -62,14 +53,6 @@ function monthData(y: number, m: number) {
     firstDay:    new Date(y, m, 1).getDay(),
     daysInMonth: new Date(y, m + 1, 0).getDate(),
   };
-}
-
-function upcomingMonths(n: number) {
-  const now = new Date();
-  return Array.from({ length: n }, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-    return { year: d.getFullYear(), month: d.getMonth() };
-  });
 }
 
 // ── MonthCalendar ─────────────────────────────────────────────
@@ -167,19 +150,12 @@ export default function ClassicSearchBar({
   // Where
   const [whereText, setWhereText] = useState('');
 
-  // When – dates
-  const [whenMode, setWhenMode]   = useState<'dates' | 'flexible'>('dates');
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate,   setEndDate]   = useState<Date | null>(null);
   const [hoverDate, setHoverDate] = useState<Date | null>(null);
-  const [flexibility, setFlexibility] = useState('exact');
   const [calBase, setCalBase] = useState<Date>(() => {
     const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1);
   });
-
-  // When – flexible
-  const [flexDuration, setFlexDuration] = useState<string | null>(null);
-  const [flexMonths,   setFlexMonths]   = useState<Set<string>>(new Set());
 
   // Who
   const [adults,   setAdults]   = useState(0);
@@ -211,22 +187,7 @@ export default function ClassicSearchBar({
     }
   }
 
-  function toggleFlexMonth(key: string) {
-    setFlexMonths(prev => {
-      const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
-      return next;
-    });
-  }
-
   const whenDisplay = (() => {
-    if (whenMode === 'flexible') {
-      if (flexDuration)
-        return flexMonths.size > 0
-          ? `${flexDuration} · ${flexMonths.size} month${flexMonths.size > 1 ? 's' : ''}`
-          : flexDuration;
-      return 'Anytime';
-    }
     if (startDate && endDate) return `${fmt(startDate)} – ${fmt(endDate)}`;
     if (startDate) return fmt(startDate);
     return 'Anytime';
@@ -251,7 +212,6 @@ export default function ClassicSearchBar({
     setActive(null);
   }
 
-  const cal2 = addMonths(calBase, 1);
   const isOpen = active !== null;
 
   return (
@@ -311,81 +271,19 @@ export default function ClassicSearchBar({
 
         {active === 'when' && (
           <div className="csb__dropdown csb__dropdown--when" onClick={e => e.stopPropagation()}>
-            {/* tabs */}
-            <div className="csb-when__tabs">
-              <button
-                className={`csb-when__tab${whenMode === 'dates' ? ' csb-when__tab--active' : ''}`}
-                onClick={() => setWhenMode('dates')}
-              >Dates</button>
-              <button
-                className={`csb-when__tab${whenMode === 'flexible' ? ' csb-when__tab--active' : ''}`}
-                onClick={() => setWhenMode('flexible')}
-              >Flexible</button>
+            <div className="csb-when__cals">
+              <button className="csb-when__nav csb-when__nav--left" onClick={() => setCalBase(d => addMonths(d, -1))} aria-label="Previous month">
+                <FaChevronLeft />
+              </button>
+              <MonthCalendar
+                year={calBase.getFullYear()} month={calBase.getMonth()}
+                startDate={startDate} endDate={endDate} hoverDate={hoverDate}
+                onDateClick={handleDateClick} onDateHover={setHoverDate}
+              />
+              <button className="csb-when__nav csb-when__nav--right" onClick={() => setCalBase(d => addMonths(d, 1))} aria-label="Next month">
+                <FaChevronRight />
+              </button>
             </div>
-
-            {whenMode === 'dates' ? (
-              <>
-                <div className="csb-when__cals">
-                  <button className="csb-when__nav csb-when__nav--left" onClick={() => setCalBase(d => addMonths(d, -1))} aria-label="Previous month">
-                    <FaChevronLeft />
-                  </button>
-                  <MonthCalendar
-                    year={calBase.getFullYear()} month={calBase.getMonth()}
-                    startDate={startDate} endDate={endDate} hoverDate={hoverDate}
-                    onDateClick={handleDateClick} onDateHover={setHoverDate}
-                  />
-                  <MonthCalendar
-                    year={cal2.getFullYear()} month={cal2.getMonth()}
-                    startDate={startDate} endDate={endDate} hoverDate={hoverDate}
-                    onDateClick={handleDateClick} onDateHover={setHoverDate}
-                  />
-                  <button className="csb-when__nav csb-when__nav--right" onClick={() => setCalBase(d => addMonths(d, 1))} aria-label="Next month">
-                    <FaChevronRight />
-                  </button>
-                </div>
-                <div className="csb-when__flex-row">
-                  {FLEX_OPTIONS.map(o => (
-                    <button
-                      key={o.value}
-                      className={`csb-when__flex-chip${flexibility === o.value ? ' csb-when__flex-chip--active' : ''}`}
-                      onClick={() => setFlexibility(o.value)}
-                    >
-                      {o.label}
-                    </button>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <>
-                <p className="csb-when__flex-title">How long would you like to stay?</p>
-                <div className="csb-when__dur-row">
-                  {FLEX_DURATIONS.map(d => (
-                    <button
-                      key={d}
-                      className={`csb-when__dur${flexDuration === d ? ' csb-when__dur--active' : ''}`}
-                      onClick={() => setFlexDuration(flexDuration === d ? null : d)}
-                    >{d}</button>
-                  ))}
-                </div>
-                <p className="csb-when__flex-title">Go anytime</p>
-                <div className="csb-when__months">
-                  {upcomingMonths(12).map(({ year, month }) => {
-                    const key = `${year}-${month}`;
-                    return (
-                      <button
-                        key={key}
-                        className={`csb-when__month${flexMonths.has(key) ? ' csb-when__month--active' : ''}`}
-                        onClick={() => toggleFlexMonth(key)}
-                      >
-                        <FaCalendar className="csb-when__month-icon" />
-                        <span className="csb-when__month-name">{MONTH_NAMES[month]}</span>
-                        <span className="csb-when__month-year">{year}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            )}
           </div>
         )}
       </div>

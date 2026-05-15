@@ -37,6 +37,8 @@ export interface BackendListing {
   _count?: { bookings: number; reviews?: number };
   latitude?: number | null;
   longitude?: number | null;
+  lat?: number | string | null;
+  lng?: number | string | null;
 }
 
 export interface PaginatedResponse<T> {
@@ -58,9 +60,38 @@ const CATEGORY_IMAGES: Record<ListingCategory, string> = {
   countryside: 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=400&h=260&fit=crop',
 };
 
+const LOCATION_COORDS: Array<{ match: string; lat: number; lng: number }> = [
+  { match: 'kigali', lat: -1.9441, lng: 30.0619 },
+  { match: 'musanze', lat: -1.4998, lng: 29.6349 },
+  { match: 'volcanoes', lat: -1.4700, lng: 29.5600 },
+  { match: 'gisenyi', lat: -1.7028, lng: 29.2564 },
+  { match: 'rubavu', lat: -1.6792, lng: 29.2619 },
+  { match: 'kibuye', lat: -2.0603, lng: 29.3478 },
+  { match: 'karongi', lat: -2.0603, lng: 29.3478 },
+  { match: 'nyungwe', lat: -2.5297, lng: 29.2781 },
+  { match: 'huye', lat: -2.5967, lng: 29.7394 },
+  { match: 'butare', lat: -2.5967, lng: 29.7394 },
+  { match: 'rwanda', lat: -1.9403, lng: 29.8739 },
+];
+
+function toCoordinate(value: number | string | null | undefined): number | undefined {
+  if (value == null || value === '') return undefined;
+  const n = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+function inferCoordinates(location: string): { lat?: number; lng?: number } {
+  const normalized = location.toLowerCase();
+  const found = LOCATION_COORDS.find(({ match }) => normalized.includes(match));
+  return found ? { lat: found.lat, lng: found.lng } : {};
+}
+
 export function transformListing(b: BackendListing): Listing {
   const category = TYPE_TO_CATEGORY[b.type] ?? 'city';
   const firstPhoto = b.photos?.[0];
+  const inferredCoords = inferCoordinates(b.location ?? '');
+  const lat = toCoordinate(b.latitude) ?? toCoordinate(b.lat) ?? inferredCoords.lat;
+  const lng = toCoordinate(b.longitude) ?? toCoordinate(b.lng) ?? inferredCoords.lng;
   return {
     id: b.id,
     title: b.title,
@@ -97,7 +128,7 @@ export function transformListing(b: BackendListing): Listing {
     published: b.published ?? true,
     host: b.host,
     type: b.type,
-    lat: b.latitude ?? undefined,
-    lng: b.longitude ?? undefined,
+    lat,
+    lng,
   };
 }

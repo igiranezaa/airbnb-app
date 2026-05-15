@@ -5,7 +5,7 @@ import {
   FaUsers, FaHome, FaCalendarAlt, FaExclamationTriangle,
   FaGavel, FaTag, FaHistory, FaBan, FaPause, FaEdit, FaCheck,
   FaChevronLeft, FaChevronRight,
-  FaIdCard, FaCog, FaUpload, FaCamera, FaFacebook, FaTwitter,
+  FaIdCard, FaUpload, FaCamera, FaFacebook, FaTwitter,
   FaInstagram, FaLinkedin, FaLock, FaBuilding, FaMapPin, FaCalendarCheck,
 } from 'react-icons/fa';
 import { useAuth } from '../hooks/useAuth';
@@ -22,10 +22,80 @@ import { useListings } from '../../listings/hooks/useListings';
 import { useBookings } from '../../bookings/hooks/useBookings';
 import DashboardTopbar from '../components/DashboardTopbar';
 import Spinner from '../../../shared/components/Spinner';
+import { saveProfileAvatar } from '../../../shared/hooks/useProfileAvatar';
 import numeral from 'numeral';
 import './DashboardPage.css';
 
-type AdminSection = 'overview' | 'users' | 'listings' | 'bookings' | 'disputes' | 'payouts' | 'audit' | 'edit-profile' | 'settings';
+type AdminSection = 'overview' | 'users' | 'listings' | 'bookings' | 'disputes' | 'payouts' | 'audit' | 'edit-profile';
+
+const profileMediaKey = (email: string, kind: 'avatar' | 'cover') =>
+  `liston:profile-media:${email || 'guest'}:${kind}`;
+const profileDetailsKey = (email: string) => `liston:profile-details:${email || 'guest'}`;
+const MAX_PROFILE_IMAGE_BYTES = 2 * 1024 * 1024;
+
+interface StoredProfileDetails {
+  name: string;
+  phone: string;
+  email: string;
+  description: string;
+  facebook: string;
+  twitter: string;
+  instagram: string;
+  linkedin: string;
+}
+
+const EMPTY_PROFILE_DETAILS: StoredProfileDetails = {
+  name: '',
+  phone: '',
+  email: '',
+  description: '',
+  facebook: '',
+  twitter: '',
+  instagram: '',
+  linkedin: '',
+};
+
+function readStoredImage(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function readStoredProfileDetails(email: string): StoredProfileDetails {
+  try {
+    const raw = localStorage.getItem(profileDetailsKey(email));
+    return raw ? { ...EMPTY_PROFILE_DETAILS, ...JSON.parse(raw) as Partial<StoredProfileDetails> } : EMPTY_PROFILE_DETAILS;
+  } catch {
+    return EMPTY_PROFILE_DETAILS;
+  }
+}
+
+function readImageFile(file: File, onLoad: (src: string) => void) {
+  const reader = new FileReader();
+  reader.onload = () => onLoad(String(reader.result));
+  reader.readAsDataURL(file);
+}
+
+function saveStoredImage(key: string, src: string): boolean {
+  try {
+    localStorage.setItem(key, src);
+    if (key.endsWith(':avatar')) {
+      const email = key.replace('liston:profile-media:', '').replace(':avatar', '');
+      saveProfileAvatar(email, src);
+    }
+    window.dispatchEvent(new CustomEvent('liston:profile-media-updated'));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function validateImageFile(file: File): boolean {
+  if (file.size <= MAX_PROFILE_IMAGE_BYTES) return true;
+  return false;
+}
 
 const ROLE_COLORS: Record<string, string> = { GUEST: '#e3f2fd', HOST: '#e8f5e9', ADMIN: '#fce4ec' };
 const ROLE_TEXT: Record<string, string> = { GUEST: '#1565c0', HOST: '#2e7d32', ADMIN: '#c62828' };
@@ -770,18 +840,22 @@ function AuditSection() {
 
 // ── Edit Profile Panel ────────────────────────────────────────────────────────
 function EditProfilePanel({ userName, userEmail }: { userName: string; userEmail: string }) {
+  const { updateLocalName } = useAuth();
+  const storedProfile = readStoredProfileDetails(userEmail);
   const coverRef = useRef<HTMLInputElement>(null);
   const avatarRef = useRef<HTMLInputElement>(null);
-  const [coverSrc, setCoverSrc] = useState('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=80');
-  const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
-  const [name, setName] = useState(userName);
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState(userEmail);
-  const [description, setDescription] = useState('');
-  const [facebook, setFacebook] = useState('');
-  const [twitter, setTwitter] = useState('');
-  const [instagram, setInstagram] = useState('');
-  const [linkedin, setLinkedin] = useState('');
+  const [coverSrc, setCoverSrc] = useState(
+    () => readStoredImage(profileMediaKey(userEmail, 'cover')) ?? 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=80'
+  );
+  const [avatarSrc, setAvatarSrc] = useState<string | null>(() => readStoredImage(profileMediaKey(userEmail, 'avatar')));
+  const [name, setName] = useState(storedProfile.name || userName);
+  const [phone, setPhone] = useState(storedProfile.phone);
+  const [email, setEmail] = useState(storedProfile.email || userEmail);
+  const [description, setDescription] = useState(storedProfile.description);
+  const [facebook, setFacebook] = useState(storedProfile.facebook);
+  const [twitter, setTwitter] = useState(storedProfile.twitter);
+  const [instagram, setInstagram] = useState(storedProfile.instagram);
+  const [linkedin, setLinkedin] = useState(storedProfile.linkedin);
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
   const [confirmPw, setConfirmPw] = useState('');
@@ -790,18 +864,30 @@ function EditProfilePanel({ userName, userEmail }: { userName: string; userEmail
 
   function handleCover(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
+    e.target.value = '';
     if (!f) return;
-    const reader = new FileReader();
-    reader.onload = () => setCoverSrc(reader.result as string);
-    reader.readAsDataURL(f);
+    if (!validateImageFile(f)) {
+      alert('That picture is too large. Please choose an image under 2 MB.');
+      return;
+    }
+    readImageFile(f, (src) => {
+      setCoverSrc(src);
+      saveStoredImage(profileMediaKey(userEmail, 'cover'), src);
+    });
   }
 
   function handleAvatar(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
+    e.target.value = '';
     if (!f) return;
-    const reader = new FileReader();
-    reader.onload = () => setAvatarSrc(reader.result as string);
-    reader.readAsDataURL(f);
+    if (!validateImageFile(f)) {
+      alert('That picture is too large. Please choose an image under 2 MB.');
+      return;
+    }
+    readImageFile(f, (src) => {
+      setAvatarSrc(src);
+      saveStoredImage(profileMediaKey(userEmail, 'avatar'), src);
+    });
   }
 
   function handleSave(e: React.FormEvent) {
@@ -811,6 +897,20 @@ function EditProfilePanel({ userName, userEmail }: { userName: string; userEmail
       return;
     }
     setPwError('');
+    const profile: StoredProfileDetails = {
+      name: name.trim(),
+      phone,
+      email,
+      description,
+      facebook,
+      twitter,
+      instagram,
+      linkedin,
+    };
+    localStorage.setItem(profileDetailsKey(userEmail), JSON.stringify(profile));
+    if (profile.name) updateLocalName(profile.name);
+    saveStoredImage(profileMediaKey(userEmail, 'cover'), coverSrc);
+    if (avatarSrc) saveStoredImage(profileMediaKey(userEmail, 'avatar'), avatarSrc);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   }
@@ -924,15 +1024,6 @@ function EditProfilePanel({ userName, userEmail }: { userName: string; userEmail
   );
 }
 
-function SettingsPanel() {
-  return (
-    <div className="ep-page" style={{ padding: '2rem' }}>
-      <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '1rem' }}>Settings</h2>
-      <p style={{ color: '#888' }}>Platform settings coming soon.</p>
-    </div>
-  );
-}
-
 // ── Main Admin Dashboard ──────────────────────────────────────────────────────
 export default function AdminDashboard() {
   const { logout, userName, userEmail } = useAuth();
@@ -981,13 +1072,6 @@ export default function AdminDashboard() {
           >
             <FaIdCard />Edit Profile
           </button>
-          <button
-            type="button"
-            className={`db-side-nav__item db-side-nav__button${activeSection === 'settings' ? ' db-side-nav__item--active' : ''}`}
-            onClick={() => setActiveSection('settings')}
-          >
-            <FaCog />Setting
-          </button>
         </nav>
       </aside>
 
@@ -1006,7 +1090,6 @@ export default function AdminDashboard() {
           {activeSection === 'payouts'   && <PayoutsSection />}
           {activeSection === 'audit'        && <AuditSection />}
           {activeSection === 'edit-profile' && <EditProfilePanel userName={userName ?? ''} userEmail={userEmail ?? ''} />}
-          {activeSection === 'settings'     && <SettingsPanel />}
           <footer className="db-footer"><p>© 2022 ListOn - All Rights Reserved</p></footer>
         </div>
       </main>

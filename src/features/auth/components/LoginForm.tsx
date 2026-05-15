@@ -22,13 +22,16 @@ export default function LoginForm({ onSubmit, authError }: Props) {
   const emailError = emailTouched && email.length > 0 && !isValidEmail(email);
   const emailEmpty = emailTouched && email.length === 0;
 
-  async function handleSubmit(e: { preventDefault(): void }) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setEmailTouched(true);
     if (!isValidEmail(email)) return;
     setLoading(true);
-    await onSubmit('', email, password);
-    setLoading(false);
+    try {
+      await onSubmit('', email, password);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

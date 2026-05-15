@@ -10,9 +10,11 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import api from '../../../lib/axios';
 import { config } from '../../../config/env';
+import { saveProfileAvatar } from '../../../shared/hooks/useProfileAvatar';
 import './AccountSettingsPage.css';
 
 type Section = 'profile' | 'notifications' | 'payments' | 'sessions' | 'gdpr';
+const MAX_PROFILE_IMAGE_BYTES = 2 * 1024 * 1024;
 
 // ── API hooks ─────────────────────────────────────────────────────────────────
 
@@ -143,7 +145,7 @@ function useSetDefaultPaymentMethod() {
 
 // ── Sub-sections ──────────────────────────────────────────────────────────────
 
-function ProfileSection({ userName, updateLocalName }: { userName: string; updateLocalName: (n: string) => void }) {
+function ProfileSection({ userName, userEmail, updateLocalName }: { userName: string; userEmail: string; updateLocalName: (n: string) => void }) {
   const { data: profileData } = useProfile();
   const { mutate: updateProfile, isPending } = useUpdateProfile();
   const { mutate: uploadAvatar, isPending: uploadingAvatar } = useUploadAvatar();
@@ -175,10 +177,23 @@ function ProfileSection({ userName, updateLocalName }: { userName: string; updat
 
   function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
+    if (file.size > MAX_PROFILE_IMAGE_BYTES) {
+      alert('That picture is too large. Please choose an image under 2 MB.');
+      return;
+    }
     setAvatarFile(file);
     const reader = new FileReader();
-    reader.onload = () => setAvatarPreview(reader.result as string);
+    reader.onload = () => {
+      const src = String(reader.result);
+      setAvatarPreview(src);
+      try {
+        saveProfileAvatar(userEmail, src);
+      } catch {
+        alert('That picture is too large to save in this browser. Please choose a smaller image.');
+      }
+    };
     reader.readAsDataURL(file);
   }
 
@@ -218,7 +233,7 @@ function ProfileSection({ userName, updateLocalName }: { userName: string; updat
         </div>
         <div>
           <p className="as-label-text" style={{ margin: 0 }}>Profile Photo</p>
-          <p style={{ fontSize: 12, color: '#aaa', margin: '4px 0 8px' }}>JPG or PNG, max 5 MB</p>
+          <p style={{ fontSize: 12, color: '#aaa', margin: '4px 0 8px' }}>JPG, PNG, or WebP, max 2 MB</p>
           <button type="button" className="as-btn-secondary" onClick={() => fileInputRef.current?.click()} disabled={uploadingAvatar}>
             {uploadingAvatar ? 'Uploading…' : 'Change Photo'}
           </button>
@@ -690,8 +705,8 @@ function PaymentsSection() {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function AccountSettingsPage() {
-  const { userName, userRole, switchRole, logout, updateLocalName } = useAuth() as {
-    userName: string; userRole: string;
+  const { userName, userEmail, userRole, switchRole, logout, updateLocalName } = useAuth() as {
+    userName: string; userEmail: string; userRole: string;
     switchRole: (r: 'GUEST' | 'HOST') => Promise<boolean>;
     logout: () => void;
     updateLocalName: (n: string) => void;
@@ -731,7 +746,7 @@ export default function AccountSettingsPage() {
         </nav>
 
         <div className="as-content">
-          {active === 'profile'       && <ProfileSection userName={userName} updateLocalName={updateLocalName} />}
+          {active === 'profile'       && <ProfileSection userName={userName} userEmail={userEmail} updateLocalName={updateLocalName} />}
           {active === 'notifications' && <NotificationsSection />}
           {active === 'payments'      && <PaymentsSection />}
           {active === 'sessions'      && <SessionsSection />}

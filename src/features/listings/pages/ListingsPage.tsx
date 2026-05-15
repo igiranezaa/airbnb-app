@@ -245,8 +245,6 @@ export default function ListingsPage() {
   );
 
   const midPrice = Math.round((draft.minPrice + draft.maxPrice) / 2);
-  const hasSearchFilters = !!(checkIn || checkOut || guestCount > 1 || selectedLocation || selectedType);
-
   const filterSidebarContent = (
     <>
       <section className="sidebar-section">
@@ -352,32 +350,6 @@ export default function ListingsPage() {
           selectedCategories={draft.categories}
           onCategoryChange={(cats) => patch('categories', cats)}
         />
-      </div>
-
-      {/* Date / guest bar */}
-      <div className="listings-date-bar">
-        <div className="ldb-group">
-          <label className="ldb-label">Check-in</label>
-          <input type="date" className="ldb-input" value={checkIn}
-            min={new Date().toISOString().slice(0, 10)}
-            onChange={(e) => setCheckIn(e.target.value)} />
-        </div>
-        <div className="ldb-group">
-          <label className="ldb-label">Check-out</label>
-          <input type="date" className="ldb-input" value={checkOut}
-            min={checkIn || new Date().toISOString().slice(0, 10)}
-            onChange={(e) => setCheckOut(e.target.value)} />
-        </div>
-        <div className="ldb-group ldb-group--guests">
-          <label className="ldb-label">Guests</label>
-          <input type="number" className="ldb-input" min={1} max={20} value={guestCount}
-            onChange={(e) => setGuestCount(Math.max(1, Number(e.target.value)))} />
-        </div>
-        {hasSearchFilters && (
-          <button className="ldb-clear" type="button" onClick={clearAll}>
-            <FaTimes /> Clear
-          </button>
-        )}
       </div>
 
       {/* Body: listings + map */}

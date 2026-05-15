@@ -4,6 +4,7 @@ import api from '../../lib/axios';
 import { useAuth } from '../../features/auth/hooks/useAuth';
 import { useFavorites } from '../../features/listings/hooks/useFavorites';
 import { useTheme } from '../../context/ThemeContext';
+import { useProfileAvatar } from '../hooks/useProfileAvatar';
 import SavedListings from '../../features/listings/components/SavedListings';
 import { FaBars, FaHeart, FaMoon, FaSun, FaExclamationCircle, FaTachometerAlt, FaSignOutAlt, FaUserCircle } from 'react-icons/fa';
 import './Navbar.css';
@@ -12,6 +13,7 @@ export default function Navbar() {
   const { isAuthenticated, userRole, emailVerified, userEmail, userName, logout } = useAuth();
   const { count } = useFavorites();
   const { dark, toggle: toggleTheme } = useTheme();
+  const avatarSrc = useProfileAvatar(userEmail);
   const navigate = useNavigate();
   const [showSaved, setShowSaved] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -104,7 +106,7 @@ export default function Navbar() {
               aria-label="Profile menu"
               onClick={() => setShowProfileMenu((v) => !v)}
             >
-              {initials}
+              {avatarSrc ? <img src={avatarSrc} alt={userName ? `${userName} avatar` : 'User avatar'} /> : initials}
             </button>
             {showProfileMenu && (
               <div className="navbar__profile-menu">

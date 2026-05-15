@@ -10,13 +10,13 @@ export default function LoginPage() {
   const { isAuthenticated, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || '/';
+  const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || '/dashboard';
   const [authError, setAuthError] = useState<string | null>(null);
   const [isLocked, setIsLocked] = useState(false);
 
   useEffect(() => {
-    if (isAuthenticated) navigate('/', { replace: true });
-  }, [isAuthenticated, navigate]);
+    if (isAuthenticated) navigate(from, { replace: true });
+  }, [from, isAuthenticated, navigate]);
 
   async function handleLogin(_name: string, email: string, password: string) {
     setAuthError(null);

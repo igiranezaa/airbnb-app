@@ -30,13 +30,13 @@ export default function ForgotPasswordPage() {
       <div className="fp-left">
         <div className="fp-left__inner">
           {sent ? (
-            <div style={{ textAlign: 'center', padding: '2rem 0' }}>
-              <FaCheckCircle style={{ fontSize: 48, color: '#2e7d32', marginBottom: 16 }} />
-              <h2 style={{ margin: '0 0 12px', fontSize: 24, fontWeight: 700, color: '#1a1f27' }}>Check your email</h2>
-              <p style={{ color: '#7a808a', lineHeight: 1.6, marginBottom: 24 }}>
+            <div className="fp-success">
+              <FaCheckCircle className="fp-success__icon" />
+              <h2 className="fp-success__title">Check your email</h2>
+              <p className="fp-success__copy">
                 We sent a password reset link to <strong>{email}</strong>. The link is valid for 30 minutes.
               </p>
-              <Link to="/login" className="fp-submit" style={{ display: 'block', textDecoration: 'none', textAlign: 'center', padding: '12px', borderRadius: 8, background: '#ef4f38', color: '#fff', fontWeight: 700 }}>
+              <Link to="/login" className="fp-submit fp-success__link">
                 Back to Sign In
               </Link>
             </div>
@@ -66,7 +66,7 @@ export default function ForgotPasswordPage() {
                   </label>
                 </div>
 
-                {error && <p style={{ color: '#c62828', fontSize: 13, margin: '0 0 8px' }}>{error}</p>}
+                {error && <p className="fp-error">{error}</p>}
 
                 <button className="fp-submit" type="submit" disabled={loading || !email}>
                   {loading ? 'Sending…' : 'Send Reset Link'}

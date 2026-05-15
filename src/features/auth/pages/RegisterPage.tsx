@@ -92,7 +92,7 @@ export default function RegisterPage() {
     setResendLoading(true);
     setResendMsg('');
     try {
-      await fetch(`${config.apiUrl ?? 'http://localhost:3000/api/v1'}/auth/resend-verification`, {
+      await fetch(`${config.apiUrl}/auth/resend-verification`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),

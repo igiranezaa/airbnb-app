@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useCallback, useState, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import type { AxiosError } from 'axios';
 import api from '../../../lib/axios';
 import { config } from '../../../config/env';
 import { useStore } from '../../../store/StoreContext';
@@ -16,6 +17,26 @@ const TOKEN_KEY           = 'token';
 export interface LoginError {
   message: string;
   locked?: boolean;
+  lockedUntil?: string;
+}
+
+interface AuthUser {
+  id?: string;
+  name?: string;
+  email?: string;
+  role?: string;
+  emailVerified?: boolean;
+}
+
+interface LoginResponse {
+  token?: string;
+  accessToken?: string;
+  user?: AuthUser;
+}
+
+interface AuthErrorResponse {
+  error?: string;
+  message?: string;
   lockedUntil?: string;
 }
 
@@ -45,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userId, setUserId]         = useState(() => localStorage.getItem(AUTH_ID_KEY) || '');
   const [emailVerified, setEmailVerified] = useState(() => localStorage.getItem(AUTH_VERIFIED_KEY) === 'true');
 
-  const applyAuthUser = useCallback((user: { id?: string; name?: string; email?: string; role?: string; emailVerified?: boolean }) => {
+  const applyAuthUser = useCallback((user: AuthUser) => {
     const resolvedEmail    = user.email ?? '';
     const resolvedName     = user.name ?? resolvedEmail;
     const resolvedRole     = user.role ?? '';
@@ -89,7 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     async function syncSession() {
       try {
-        const { data: me } = await api.get<{ id?: string; name?: string; email?: string; role?: string; emailVerified?: boolean }>('/auth/me');
+        const { data: me } = await api.get<AuthUser>('/auth/me');
         if (cancelled) return;
 
         const previousRole = localStorage.getItem(AUTH_ROLE_KEY) || '';
@@ -115,7 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function login(email: string, password: string): Promise<true | LoginError> {
     if (config.apiUrl) {
       try {
-        const { data: loginData } = await api.post<{ token?: string; accessToken?: string }>(
+        const { data: loginData } = await api.post<LoginResponse>(
           '/auth/login',
           { email, password }
         );
@@ -124,20 +145,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!token) return { message: 'Login failed.' };
         localStorage.setItem(TOKEN_KEY, token);
 
-        const { data: me } = await api.get<{ id?: string; name?: string; email?: string; role?: string; emailVerified?: boolean }>('/auth/me');
+        let me = loginData.user;
+        if (!me) {
+          try {
+            const { data } = await api.get<AuthUser>('/auth/me');
+            me = data;
+          } catch {
+            me = { email };
+          }
+        }
 
         applyAuthUser({ ...me, email: me.email ?? email });
         queryClient.clear();
         return true;
       } catch (err: unknown) {
         localStorage.removeItem(TOKEN_KEY);
-        const e = err as { response?: { status?: number; data?: { error?: string; lockedUntil?: string } } };
+        const e = err as AxiosError<AuthErrorResponse>;
         const status = e?.response?.status;
         const data   = e?.response?.data;
         if (status === 423) {
-          return { message: data?.error ?? 'Account locked.', locked: true, lockedUntil: data?.lockedUntil };
+          return { message: data?.error ?? data?.message ?? 'Account locked.', locked: true, lockedUntil: data?.lockedUntil };
         }
-        return { message: data?.error ?? 'Wrong email or password.' };
+        return { message: data?.error ?? data?.message ?? 'Wrong email or password.' };
       }
     }
 

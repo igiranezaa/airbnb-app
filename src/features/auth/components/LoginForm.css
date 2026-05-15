@@ -20,14 +20,15 @@
   font-size: 15px;
   color: #1a1f27;
   background: #fff;
-  border: 1.5px solid #dce2e8;
-  border-radius: 8px;
+  border: 1.5px solid #e4dfdc;
+  border-radius: 12px;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
 }
 
 .lf-input:focus {
   border-color: #ef4f38;
+  box-shadow: 0 0 0 4px rgba(239, 79, 56, 0.10);
 }
 
 /* Floating label */
@@ -141,21 +142,24 @@
 /* ─── Submit button ──────────────────────────────────────────── */
 .lf-submit {
   width: 100%;
-  padding: 14px;
+  padding: 15px;
   background: #ef4f38;
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: 14px;
   font: inherit;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
   letter-spacing: 0.3px;
-  transition: background 0.15s;
+  box-shadow: 0 12px 28px rgba(239, 79, 56, 0.24);
+  transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
 }
 
 .lf-submit:hover:not(:disabled) {
   background: #d9432d;
+  transform: translateY(-1px);
+  box-shadow: 0 16px 34px rgba(239, 79, 56, 0.28);
 }
 
 .lf-submit:disabled {
