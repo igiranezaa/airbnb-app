@@ -20,9 +20,16 @@ export interface ListingSearchParams {
   minBathrooms?: number;
 }
 
+function hasActiveSearchParams(params?: ListingSearchParams): boolean {
+  if (!params) return false;
+  return Object.values(params).some((value) => Array.isArray(value) ? value.length > 0 : value != null && value !== false && value !== '');
+}
+
 export function useListings(params?: ListingSearchParams) {
+  const hasActiveParams = hasActiveSearchParams(params);
+
   return useQuery<Listing[]>({
-    queryKey: ['listings', params],
+    queryKey: ['listings', hasActiveParams ? params : undefined],
     queryFn: async () => {
       if (!config.apiUrl) {
         await new Promise((r) => setTimeout(r, 600));
@@ -44,10 +51,10 @@ export function useListings(params?: ListingSearchParams) {
       q.set('limit', '100');
       try {
         const { data } = await api.get<PaginatedResponse<BackendListing>>(`/listings/search?${q.toString()}`);
-        if (data.data.length === 0 && !params) return mockListings;
+        if (data.data.length === 0 && !hasActiveParams) return mockListings;
         return data.data.map(transformListing);
       } catch {
-        if (!params) return mockListings;
+        if (!hasActiveParams) return mockListings;
         return [];
       }
     },

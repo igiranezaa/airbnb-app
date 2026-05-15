@@ -15,8 +15,14 @@ export function useListing(id: string | undefined) {
         if (!listing) throw new Error(`Listing ${id} not found`);
         return listing;
       }
-      const { data } = await api.get<BackendListing & { reviewCount?: number }>(`/listings/${id}`);
-      return transformListing(data);
+      try {
+        const { data } = await api.get<BackendListing & { reviewCount?: number }>(`/listings/${id}`);
+        return transformListing(data);
+      } catch (error) {
+        const listing = mockListings.find((l) => String(l.id) === id);
+        if (listing) return listing;
+        throw error;
+      }
     },
     enabled: !!id,
     staleTime: 30_000,
