@@ -80,13 +80,13 @@ export default function ListingDetail() {
 
   const {
     title, location, price, rating: listingRating, superhost,
-    img, photos, category,
-    rooms, beds, bathrooms, guests: maxGuests,
-    amenities, houseRules, checkInMethod, checkOutMethod,
-    cancellationPolicy, instantBook,
-    cleaningFee, serviceFeePercent, taxPercent,
-    minNights, maxNights,
-    description,
+    img, photos = [], category,
+    rooms = 1, beds = 1, bathrooms = 1, guests: maxGuests = 1,
+    amenities = [], houseRules, checkInMethod, checkOutMethod,
+    cancellationPolicy = 'FLEXIBLE', instantBook = false,
+    cleaningFee = 0, serviceFeePercent = 14, taxPercent = 0,
+    minNights = 1, maxNights = null,
+    description = '',
   } = listing;
 
   const allPhotos = photos.length ? photos : [img];
