@@ -13,6 +13,7 @@ import { useAuth } from '../../auth/hooks/useAuth';
 import { config } from '../../../config/env';
 import { useCreateListing } from '../hooks/useHostListings';
 import type { CancellationPolicy } from '../types';
+import { MIN_LISTING_PHOTOS, uploadListingPhotos } from '../utils/photos';
 import './AddListingPage.css';
 
 const PHOTO_ACCEPT = 'image/jpeg,image/png,image/webp';
@@ -228,12 +229,7 @@ export default function AddListingPage() {
 
   async function uploadPhotos(listingId: string) {
     if (!files.length || !config.apiUrl) return;
-    // Batch upload 5 at a time (API limit)
-    for (let i = 0; i < files.length; i += 5) {
-      const form = new FormData();
-      files.slice(i, i + 5).forEach((f) => form.append('images', f));
-      await api.post(`/listings/${listingId}/photos`, form);
-    }
+    await uploadListingPhotos(api, listingId, files);
   }
 
   /* ── Amenity toggle ── */
@@ -301,8 +297,8 @@ export default function AddListingPage() {
       toast.error('Please enter a valid nightly price.');
       return;
     }
-    if (files.length < 5) {
-      toast.error('Please upload at least 5 photos for this listing.');
+    if (files.length < MIN_LISTING_PHOTOS) {
+      toast.error(`Please upload at least ${MIN_LISTING_PHOTOS} photos for this listing.`);
       return;
     }
     const location = [city, stateVal, address].filter(Boolean).join(', ');
@@ -558,7 +554,7 @@ export default function AddListingPage() {
           {/* ─ 04 Gallery (FR-015) ─ */}
           <div className="al-card">
             <SectionHeader num="04/" icon={<FaImages />} title="Gallery"
-              desc="Add up to 100 photos (JPG/PNG/WebP). Max 20 MB per image. First photo is the cover." />
+              desc={`Add at least ${MIN_LISTING_PHOTOS} photos, up to 100 total (JPG/PNG/WebP). Max 20 MB per image. First photo is the cover.`} />
             <div className="al-fields">
               <div className="al-field al-field--full">
                 <div
@@ -588,7 +584,7 @@ export default function AddListingPage() {
                   <input ref={fileRef} type="file" accept={PHOTO_ACCEPT} multiple hidden
                     onChange={(e) => addFiles(e.target.files)} />
                 </div>
-                <p className="al-hint">Drag & drop or click to upload · Max 100 photos · Max 20 MB each · {previews.length}/100</p>
+                <p className="al-hint">Drag & drop or click to upload · Min {MIN_LISTING_PHOTOS} · Max 100 photos · Max 20 MB each · {previews.length}/100</p>
               </div>
             </div>
           </div>

@@ -14,7 +14,7 @@ import { useHostListings, useCreateListing, useUpdateListing, useDeleteListing, 
 import { useBookings, useUpdateBookingStatus } from '../../bookings/hooks/useBookings';
 import MessagesPanel from '../../bookings/components/MessagesPanel';
 import type { Booking } from '../../bookings/hooks/useBookings';
-import { getFallbackPhoto } from '../../listings/utils/photos';
+import { getFallbackPhoto, MIN_LISTING_PHOTOS, uploadListingPhotos } from '../../listings/utils/photos';
 import DashboardTopbar from '../components/DashboardTopbar';
 import EditProfileSection from '../components/EditProfileSection';
 import Spinner from '../../../shared/components/Spinner';
@@ -80,7 +80,7 @@ function HostOverview({ listings, bookings }: { listings: HostListing[]; booking
 
 function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoading: boolean }) {
   const queryClient = useQueryClient();
-  const { mutate: updateListing, isPending: isUpdating } = useUpdateListing();
+  const { mutate: updateListing, mutateAsync: updateListingAsync, isPending: isUpdating } = useUpdateListing();
   const { mutate: deleteListing, isPending: isDeleting } = useDeleteListing();
   const editFileRef = useRef<HTMLInputElement>(null);
 
@@ -171,28 +171,29 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
   }
 
   async function uploadEditPhotos(listingId: string) {
-    for (let i = 0; i < editPhotoFiles.length; i += 5) {
-      const form = new FormData();
-      editPhotoFiles.slice(i, i + 5).forEach((file) => form.append('images', file));
-      await api.post(`/listings/${listingId}/photos`, form);
-    }
+    return uploadListingPhotos(api, listingId, editPhotoFiles);
   }
 
   function toggleEditAmenity(a: string) {
     setEditAmenities((prev) => prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]);
   }
 
-  function saveEdit(e: React.FormEvent) {
+  async function saveEdit(e: React.FormEvent) {
     e.preventDefault();
     if (!editTarget) return;
     if (!editTitle.trim() || !editPrice || !editLocation.trim()) {
       toast.error('Title, location and price are required.'); return;
     }
-    if (editPhotos.length + editPhotoFiles.length < 5) {
-      toast.error('Please keep or upload at least 5 listing photos.'); return;
+    if (editPhotos.length + editPhotoFiles.length < MIN_LISTING_PHOTOS) {
+      toast.error(`Please keep or upload at least ${MIN_LISTING_PHOTOS} listing photos.`); return;
     }
-    updateListing(
-      {
+
+    setIsUploadingEditPhotos(true);
+    try {
+      const uploadedPhotoUrls = editPhotoFiles.length
+        ? await uploadEditPhotos(editTarget.id)
+        : [];
+      const payload: Partial<CreateListingPayload> & { id: string } = {
         id: editTarget.id,
         title: editTitle.trim(),
         type: editType as CreateListingPayload['type'],
@@ -204,29 +205,23 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
         cleaningFee: editCleaningFee !== '' ? Number(editCleaningFee) : undefined,
         minNights: editMinNights !== '' ? Number(editMinNights) : undefined,
         instantBook: editInstant,
-        photos: editPhotos,
-      },
-      {
-        onSuccess: async () => {
-          try {
-            if (editPhotoFiles.length) {
-              setIsUploadingEditPhotos(true);
-              await uploadEditPhotos(editTarget.id);
-              await queryClient.invalidateQueries({ queryKey: ['host-listings'] });
-              await queryClient.invalidateQueries({ queryKey: ['listings'] });
-              await queryClient.invalidateQueries({ queryKey: ['listing', editTarget.id] });
-            }
-            toast.success('Listing updated!');
-            closeEdit();
-          } catch {
-            toast.error('Listing details saved, but photo upload failed.');
-          } finally {
-            setIsUploadingEditPhotos(false);
-          }
-        },
-        onError: () => toast.error('Failed to update listing.'),
+      };
+
+      if (!editPhotoFiles.length || uploadedPhotoUrls.length) {
+        payload.photos = [...new Set([...editPhotos, ...uploadedPhotoUrls])];
       }
-    );
+
+      await updateListingAsync(payload);
+      await queryClient.invalidateQueries({ queryKey: ['host-listings'] });
+      await queryClient.invalidateQueries({ queryKey: ['listings'] });
+      await queryClient.invalidateQueries({ queryKey: ['listing', editTarget.id] });
+      toast.success('Listing updated!');
+      closeEdit();
+    } catch {
+      toast.error('Failed to save listing photos. Please try again.');
+    } finally {
+      setIsUploadingEditPhotos(false);
+    }
   }
 
   function confirmDelete() {
@@ -401,7 +396,7 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
                   />
                 </div>
                 <p className="edit-listing-photos__hint">
-                  Keep at least 5 photos. Existing photos stay in order; remove photos you do not want, then add new ones.
+                  Keep at least {MIN_LISTING_PHOTOS} photos. Existing photos stay in order; remove photos you do not want, then add new ones.
                 </p>
                 <div className="edit-listing-photos__grid">
                   {editPhotos.map((src, index) => (
@@ -821,12 +816,7 @@ function AddListingForm({ userId, onSuccess }: { userId: string; onSuccess: () =
     setPreviews((p) => p.filter((_, j) => j !== i));
   }
   async function uploadPhotos(listingId: string) {
-    if (!photoFiles.length) return;
-    for (let i = 0; i < photoFiles.length; i += 5) {
-      const form = new FormData();
-      photoFiles.slice(i, i + 5).forEach((f) => form.append('images', f));
-      await api.post(`/listings/${listingId}/photos`, form);
-    }
+    await uploadListingPhotos(api, listingId, photoFiles);
   }
   function toggleAmenity(a: string) { setAmenities((p) => p.includes(a) ? p.filter((x) => x !== a) : [...p, a]); }
   function addSchedule() { setScheduleItems((p) => [...p, { id: Date.now(), date: '', time: '', place: '', address: '' }]); }
@@ -844,8 +834,8 @@ function AddListingForm({ userId, onSuccess }: { userId: string; onSuccess: () =
     if (!pricePerNight || pricePerNight < 1) {
       toast.error('Please add a price in the Pricing plan section.'); return;
     }
-    if (photoFiles.length < 5) {
-      toast.error('Please upload at least 5 photos for this listing.'); return;
+    if (photoFiles.length < MIN_LISTING_PHOTOS) {
+      toast.error(`Please upload at least ${MIN_LISTING_PHOTOS} photos for this listing.`); return;
     }
     const location = [address, apt, city, stateVal, zip, country].filter(Boolean).join(', ');
     createListing(
@@ -1022,7 +1012,7 @@ function AddListingForm({ userId, onSuccess }: { userId: string; onSuccess: () =
               )}
               <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple hidden onChange={(e) => addFiles(e.target.files)} />
             </div>
-            <p className="al-hint">Max 10 photos (png, jpg, jpeg). {previews.length}/10</p>
+            <p className="al-hint">Min {MIN_LISTING_PHOTOS} · Max 10 photos (png, jpg, jpeg). {previews.length}/10</p>
           </div>
         </div>
       </div>
