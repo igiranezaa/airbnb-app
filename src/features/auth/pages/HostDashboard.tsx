@@ -14,7 +14,7 @@ import { useHostListings, useCreateListing, useUpdateListing, useDeleteListing, 
 import { useBookings, useUpdateBookingStatus } from '../../bookings/hooks/useBookings';
 import MessagesPanel from '../../bookings/components/MessagesPanel';
 import type { Booking } from '../../bookings/hooks/useBookings';
-import { getFallbackPhoto, MIN_LISTING_PHOTOS, uploadListingPhotos } from '../../listings/utils/photos';
+import { getFallbackPhoto, getPhotoDataUrls, MIN_LISTING_PHOTOS, uploadListingPhotos } from '../../listings/utils/photos';
 import DashboardTopbar from '../components/DashboardTopbar';
 import EditProfileSection from '../components/EditProfileSection';
 import Spinner from '../../../shared/components/Spinner';
@@ -190,9 +190,14 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
 
     setIsUploadingEditPhotos(true);
     try {
-      const uploadedPhotoUrls = editPhotoFiles.length
-        ? await uploadEditPhotos(editTarget.id)
-        : [];
+      let newPhotoUrls: string[] = [];
+      if (editPhotoFiles.length) {
+        try {
+          newPhotoUrls = await uploadEditPhotos(editTarget.id);
+        } catch {
+          newPhotoUrls = await getPhotoDataUrls(editPhotoFiles);
+        }
+      }
       const payload: Partial<CreateListingPayload> & { id: string } = {
         id: editTarget.id,
         title: editTitle.trim(),
@@ -207,9 +212,7 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
         instantBook: editInstant,
       };
 
-      if (!editPhotoFiles.length || uploadedPhotoUrls.length) {
-        payload.photos = [...new Set([...editPhotos, ...uploadedPhotoUrls])];
-      }
+      payload.photos = [...new Set([...editPhotos, ...newPhotoUrls])];
 
       await updateListingAsync(payload);
       await queryClient.invalidateQueries({ queryKey: ['host-listings'] });
@@ -754,6 +757,7 @@ const WIZARD_STEPS = [
 
 function AddListingForm({ userId, onSuccess }: { userId: string; onSuccess: () => void }) {
   const { mutate: createListing, isPending } = useCreateListing(userId);
+  const { mutateAsync: updateCreatedListing } = useUpdateListing();
   const queryClient = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState(1);
@@ -816,7 +820,7 @@ function AddListingForm({ userId, onSuccess }: { userId: string; onSuccess: () =
     setPreviews((p) => p.filter((_, j) => j !== i));
   }
   async function uploadPhotos(listingId: string) {
-    await uploadListingPhotos(api, listingId, photoFiles);
+    return uploadListingPhotos(api, listingId, photoFiles);
   }
   function toggleAmenity(a: string) { setAmenities((p) => p.includes(a) ? p.filter((x) => x !== a) : [...p, a]); }
   function addSchedule() { setScheduleItems((p) => [...p, { id: Date.now(), date: '', time: '', place: '', address: '' }]); }
@@ -838,29 +842,46 @@ function AddListingForm({ userId, onSuccess }: { userId: string; onSuccess: () =
       toast.error(`Please upload at least ${MIN_LISTING_PHOTOS} photos for this listing.`); return;
     }
     const location = [address, apt, city, stateVal, zip, country].filter(Boolean).join(', ');
-    createListing(
-      { title: listingTitle.trim(), description: description.trim(), location, pricePerNight, guests: Number(guests), type: category as CreateListingPayload['type'], amenities, published: true },
-      {
-        onSuccess: async (response) => {
-          const listingId = response.data.id;
-          if (photoFiles.length && listingId) {
-            setIsUploading(true);
-            try {
-              await uploadPhotos(listingId);
+    getPhotoDataUrls(photoFiles)
+      .then((photoUrls) => {
+        createListing(
+          {
+            title: listingTitle.trim(),
+            description: description.trim(),
+            location,
+            pricePerNight,
+            guests: Number(guests),
+            type: category as CreateListingPayload['type'],
+            amenities,
+            photos: photoUrls,
+            published: true,
+          },
+          {
+            onSuccess: async (response) => {
+              const listingId = response.data.id;
+              if (photoFiles.length && listingId) {
+                setIsUploading(true);
+                try {
+                  const uploadedUrls = await uploadPhotos(listingId);
+                  if (uploadedUrls.length) {
+                    await updateCreatedListing({ id: listingId, photos: uploadedUrls });
+                  }
+                } catch {
+                  // The listing already has compressed photo data URLs from create.
+                } finally {
+                  setIsUploading(false);
+                }
+              }
               await queryClient.invalidateQueries({ queryKey: ['host-listings'] });
               await queryClient.invalidateQueries({ queryKey: ['listings'] });
-            } catch {
-              toast.error('Listing created but photos failed to upload.');
-            } finally {
-              setIsUploading(false);
-            }
+              toast.success('Listing created successfully!');
+              onSuccess();
+            },
+            onError: () => { toast.error('Failed to create listing. Please try again.'); },
           }
-          toast.success('Listing created successfully!');
-          onSuccess();
-        },
-        onError: () => { toast.error('Failed to create listing. Please try again.'); },
-      }
-    );
+        );
+      })
+      .catch(() => toast.error('Failed to prepare listing photos.'));
   }
 
   return (

@@ -13,7 +13,7 @@ import { useAuth } from '../../auth/hooks/useAuth';
 import { config } from '../../../config/env';
 import { useCreateListing } from '../hooks/useHostListings';
 import type { CancellationPolicy } from '../types';
-import { MIN_LISTING_PHOTOS, uploadListingPhotos } from '../utils/photos';
+import { getPhotoDataUrls, MIN_LISTING_PHOTOS, uploadListingPhotos } from '../utils/photos';
 import './AddListingPage.css';
 
 const PHOTO_ACCEPT = 'image/jpeg,image/png,image/webp';
@@ -302,59 +302,68 @@ export default function AddListingPage() {
       return;
     }
     const location = [city, stateVal, address].filter(Boolean).join(', ');
-    createListing(
-      {
-        title: listingTitle.trim(),
-        description: description.trim(),
-        location,
-        pricePerNight: price,
-        guests,
-        type: category as 'APARTMENT' | 'HOUSE' | 'VILLA' | 'CABIN',
-        amenities,
-        rooms,
-        beds,
-        bathrooms,
-        houseRules: houseRules.trim() || undefined,
-        checkInMethod: checkInMethod || undefined,
-        checkOutMethod: checkOutMethod || undefined,
-        instantBook,
-        cancellationPolicy,
-        weekendPrice: weekendPrice ? Number(weekendPrice) : undefined,
-        weeklyDiscount: weeklyDiscount ? Number(weeklyDiscount) : 0,
-        monthlyDiscount: monthlyDiscount ? Number(monthlyDiscount) : 0,
-        extraGuestFee: extraGuestFee ? Number(extraGuestFee) : 0,
-        cleaningFee: cleaningFee ? Number(cleaningFee) : 0,
-        minNights: Number(minNights) || 1,
-        maxNights: maxNights ? Number(maxNights) : undefined,
-        published,
-        latitude: latitude ? Number(latitude) : undefined,
-        longitude: longitude ? Number(longitude) : undefined,
-      },
-      {
-        onSuccess: async (response) => {
-          const listingId = response.data.id;
-          setIsUploading(true);
-          try {
-            await Promise.all([
-              uploadPhotos(listingId),
-              saveBlockedDates(listingId),
-            ]);
-            // Invalidate AFTER photos are saved so the dashboard loads fresh data with photos
-            await queryClient.invalidateQueries({ queryKey: ['host-listings'] });
-            await queryClient.invalidateQueries({ queryKey: ['listings'] });
-          } catch {
-            toast.error('Listing created but some uploads failed.');
-          } finally {
-            setIsUploading(false);
+    getPhotoDataUrls(files)
+      .then((photoUrls) => {
+        createListing(
+          {
+            title: listingTitle.trim(),
+            description: description.trim(),
+            location,
+            pricePerNight: price,
+            guests,
+            type: category as 'APARTMENT' | 'HOUSE' | 'VILLA' | 'CABIN',
+            amenities,
+            rooms,
+            beds,
+            bathrooms,
+            photos: photoUrls,
+            houseRules: houseRules.trim() || undefined,
+            checkInMethod: checkInMethod || undefined,
+            checkOutMethod: checkOutMethod || undefined,
+            instantBook,
+            cancellationPolicy,
+            weekendPrice: weekendPrice ? Number(weekendPrice) : undefined,
+            weeklyDiscount: weeklyDiscount ? Number(weeklyDiscount) : 0,
+            monthlyDiscount: monthlyDiscount ? Number(monthlyDiscount) : 0,
+            extraGuestFee: extraGuestFee ? Number(extraGuestFee) : 0,
+            cleaningFee: cleaningFee ? Number(cleaningFee) : 0,
+            minNights: Number(minNights) || 1,
+            maxNights: maxNights ? Number(maxNights) : undefined,
+            published,
+            latitude: latitude ? Number(latitude) : undefined,
+            longitude: longitude ? Number(longitude) : undefined,
+          },
+          {
+            onSuccess: async (response) => {
+              const listingId = response.data.id;
+              setIsUploading(true);
+              try {
+                const [uploadedUrls] = await Promise.all([
+                  uploadPhotos(listingId),
+                  saveBlockedDates(listingId),
+                ]);
+                if (uploadedUrls.length) {
+                  await api.patch(`/listings/${listingId}`, { photos: uploadedUrls });
+                }
+                await queryClient.invalidateQueries({ queryKey: ['host-listings'] });
+                await queryClient.invalidateQueries({ queryKey: ['listings'] });
+              } catch {
+                // The listing already has compressed photo data URLs from create.
+              } finally {
+                setIsUploading(false);
+              }
+              toast.success(published ? 'Listing published!' : 'Listing saved as draft!');
+              navigate('/dashboard');
+            },
+            onError: () => {
+              toast.error('Failed to create listing. Please try again.');
+            },
           }
-          toast.success(published ? 'Listing published!' : 'Listing saved as draft!');
-          navigate('/dashboard');
-        },
-        onError: () => {
-          toast.error('Failed to create listing. Please try again.');
-        },
-      }
-    );
+        );
+      })
+      .catch(() => {
+        toast.error('Failed to prepare listing photos.');
+      });
   }
 
   return (
