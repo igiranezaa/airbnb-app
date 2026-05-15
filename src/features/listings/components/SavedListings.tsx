@@ -44,7 +44,7 @@ export default function SavedListings({ open, onClose }: Props) {
                   alt={l.title}
                   className="saved-panel__thumb"
                   onError={(e) => {
-                    e.currentTarget.src = getFallbackPhoto(l.category);
+                    e.currentTarget.src = getFallbackPhoto();
                   }}
                 />
                 <div className="saved-panel__info">

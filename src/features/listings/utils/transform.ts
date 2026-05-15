@@ -54,13 +54,6 @@ const TYPE_TO_CATEGORY: Record<ListingType, ListingCategory> = {
   HOUSE: 'countryside',
 };
 
-const CATEGORY_IMAGES: Record<ListingCategory, string> = {
-  beach: 'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=400&h=260&fit=crop',
-  mountain: 'https://images.unsplash.com/photo-1542718610-a1d656d1884c?w=400&h=260&fit=crop',
-  city: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400&h=260&fit=crop',
-  countryside: 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=400&h=260&fit=crop',
-};
-
 const LOCATION_COORDS: Array<{ match: string; lat: number; lng: number }> = [
   { match: 'kigali', lat: -1.9441, lng: 30.0619 },
   { match: 'musanze', lat: -1.4998, lng: 29.6349 },
@@ -90,7 +83,7 @@ function inferCoordinates(location: string): { lat?: number; lng?: number } {
 export function transformListing(b: BackendListing): Listing {
   const category = TYPE_TO_CATEGORY[b.type] ?? 'city';
   const firstPhoto = b.photos?.[0];
-  const photos = getListingPhotos(category, b.photos, firstPhoto);
+  const photos = getListingPhotos(b.photos, firstPhoto);
   const inferredCoords = inferCoordinates(b.location ?? '');
   const lat = toCoordinate(b.latitude) ?? toCoordinate(b.lat) ?? inferredCoords.lat;
   const lng = toCoordinate(b.longitude) ?? toCoordinate(b.lng) ?? inferredCoords.lng;
@@ -105,7 +98,7 @@ export function transformListing(b: BackendListing): Listing {
     superhost: b.superhost ?? false,
     available: true,
     availableFrom: b.createdAt.slice(0, 10),
-    img: photos[0] ?? getFallbackPhoto(category) ?? CATEGORY_IMAGES[category],
+    img: photos[0] ?? getFallbackPhoto(),
     photos,
     category,
     rooms: b.rooms ?? 1,

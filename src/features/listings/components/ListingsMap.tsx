@@ -78,7 +78,7 @@ export default function ListingsMap({
                 alt={listing.title}
                 className="lmap-popup__img"
                 onError={(e) => {
-                  e.currentTarget.src = getFallbackPhoto(listing.category);
+                  e.currentTarget.src = getFallbackPhoto();
                 }}
               />
               <div className="lmap-popup__body">

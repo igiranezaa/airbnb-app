@@ -90,7 +90,7 @@ export default function ListingDetail() {
     description = '',
   } = listing;
 
-  const allPhotos = getListingPhotos(category, photos, img);
+  const allPhotos = getListingPhotos(photos, img);
 
   function submitReview(e: React.FormEvent) {
     e.preventDefault();
@@ -113,7 +113,7 @@ export default function ListingDetail() {
             alt={`${title} photo ${photoIdx + 1}`}
             className="detail-gallery__main"
             onError={(e) => {
-              e.currentTarget.src = getFallbackPhoto(category, photoIdx);
+              e.currentTarget.src = getFallbackPhoto();
             }}
           />
           {allPhotos.length > 1 && (
@@ -128,7 +128,7 @@ export default function ListingDetail() {
                     src={src}
                     alt=""
                     onError={(e) => {
-                      e.currentTarget.src = getFallbackPhoto(category, i);
+                      e.currentTarget.src = getFallbackPhoto();
                     }}
                   />
                 </button>

@@ -35,7 +35,7 @@ const ListingCard = memo(function ListingCard({ listing, saved, onToggleSave, li
           alt={title}
           className={styles.image}
           onError={(e) => {
-            e.currentTarget.src = getFallbackPhoto(listing.category);
+            e.currentTarget.src = getFallbackPhoto();
           }}
         />
 

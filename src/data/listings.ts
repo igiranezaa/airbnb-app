@@ -67,10 +67,10 @@ const listings = [
 ] as unknown as Listing[];
 
 export default listings.map((listing) => {
-  const photos = getListingPhotos(listing.category, listing.photos, listing.img);
+  const photos = getListingPhotos(listing.photos, listing.img);
   return {
     ...listing,
-    img: photos[0] ?? getFallbackPhoto(listing.category),
+    img: photos[0] ?? getFallbackPhoto(),
     photos,
   };
 });

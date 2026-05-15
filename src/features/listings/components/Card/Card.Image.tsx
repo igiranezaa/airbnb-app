@@ -13,7 +13,7 @@ export function CardImage(): ReactElement {
         className="card__image"
         loading="lazy"
         onError={(e) => {
-          e.currentTarget.src = getFallbackPhoto(listing.category);
+          e.currentTarget.src = getFallbackPhoto();
         }}
       />
       <button

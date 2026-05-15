@@ -178,7 +178,7 @@ function ListingCard({ listing }: { listing: Listing }) {
           className="hp-card__img"
           loading="lazy"
           onError={(e) => {
-            e.currentTarget.src = getFallbackPhoto(listing.category);
+            e.currentTarget.src = getFallbackPhoto();
           }}
         />
         <span className="hp-card__badge">Guest favorite</span>
@@ -328,7 +328,7 @@ function HomeChatbot({ listings }: { listings: Listing[] }) {
                           src={listing.img}
                           alt={listing.title}
                           onError={(e) => {
-                            e.currentTarget.src = getFallbackPhoto(listing.category);
+                            e.currentTarget.src = getFallbackPhoto();
                           }}
                         />
                         <span>

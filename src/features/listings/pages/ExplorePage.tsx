@@ -88,7 +88,7 @@ function ExploreCard({
           alt={listing.title}
           className="explore-card__img"
           onError={(e) => {
-            e.currentTarget.src = getFallbackPhoto(listing.category);
+            e.currentTarget.src = getFallbackPhoto();
           }}
         />
         <span className="explore-card__featured"><FaStar /> Featured</span>
@@ -243,7 +243,7 @@ export default function ExplorePage() {
                       alt={listing.title}
                       className="explore-popup__img"
                       onError={(e) => {
-                        e.currentTarget.src = getFallbackPhoto(listing.category);
+                        e.currentTarget.src = getFallbackPhoto();
                       }}
                     />
                     <div className="explore-popup__body">
