@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaHeart, FaMagic, FaSearch, FaStar, FaTimes } from 'react-icons/fa';
+import { FaCommentDots, FaHeart, FaMagic, FaPaperPlane, FaSearch, FaStar, FaTimes } from 'react-icons/fa';
 import { useListings } from '../../listings/hooks/useListings';
 import { useStore } from '../../../store/StoreContext';
 import type { Listing } from '../../listings/types';
@@ -44,6 +44,54 @@ function filterListings(listings: Listing[], query: string): Listing[] {
     const words = q.split(/\s+/).filter((w) => w.length >= 3);
     return words.length === 0 || words.some((w) => text.includes(w));
   });
+}
+
+interface ChatMessage {
+  id: number;
+  role: 'assistant' | 'user';
+  text: string;
+  listings?: Listing[];
+}
+
+function makeChatReply(listings: Listing[], message: string): ChatMessage {
+  const q = message.trim();
+  const matches = filterListings(listings, q).slice(0, 3);
+  const lower = q.toLowerCase();
+
+  if (/hello|hi|hey/.test(lower)) {
+    return {
+      id: Date.now() + 1,
+      role: 'assistant',
+      text: 'Hi, I can help you find a stay. Tell me the place, budget, style, or number of guests.',
+    };
+  }
+
+  if (/cheap|budget|affordable|under/.test(lower)) {
+    const budget = [...matches].sort((a, b) => a.price - b.price);
+    return {
+      id: Date.now() + 1,
+      role: 'assistant',
+      text: budget.length ? 'These are the best budget-friendly stays I found.' : 'I could not find a budget match yet. Try adding a destination or max price.',
+      listings: budget,
+    };
+  }
+
+  if (/luxury|villa|premium|pool/.test(lower)) {
+    const luxury = matches.filter((l) => l.price >= 250 || l.category === 'beach').slice(0, 3);
+    return {
+      id: Date.now() + 1,
+      role: 'assistant',
+      text: luxury.length ? 'Here are some polished stays that feel more premium.' : 'I did not find a strong luxury match. Try a city, beach, or pool request.',
+      listings: luxury,
+    };
+  }
+
+  return {
+    id: Date.now() + 1,
+    role: 'assistant',
+    text: matches.length ? 'I found a few stays that match your request.' : 'I could not find a match yet. Try “Kigali for 2 guests”, “beach under $200”, or “mountain cabin”.',
+    listings: matches,
+  };
 }
 
 interface SearchSectionProps {
@@ -232,6 +280,103 @@ function AIResultsSection({
   );
 }
 
+function HomeChatbot({ listings }: { listings: Listing[] }) {
+  const [open, setOpen] = useState(false);
+  const [input, setInput] = useState('');
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      id: 1,
+      role: 'assistant',
+      text: 'Hi, I am your ListOn assistant. What kind of stay are you looking for?',
+    },
+  ]);
+
+  const suggestions = ['Beach under $200', 'Kigali for 2 guests', 'Mountain cabin', 'Luxury villa with pool'];
+
+  function send(text = input) {
+    const value = text.trim();
+    if (!value) return;
+    const userMessage: ChatMessage = { id: Date.now(), role: 'user', text: value };
+    const reply = makeChatReply(listings, value);
+    setMessages((prev) => [...prev, userMessage, reply]);
+    setInput('');
+  }
+
+  return (
+    <div className="hp-chatbot">
+      {open && (
+        <section className="hp-chatbot__panel" aria-label="ListOn chat assistant">
+          <div className="hp-chatbot__head">
+            <div>
+              <p className="hp-chatbot__eyebrow">ListOn assistant</p>
+              <h3 className="hp-chatbot__title">Find your stay</h3>
+            </div>
+            <button className="hp-chatbot__close" onClick={() => setOpen(false)} aria-label="Close chat">
+              <FaTimes />
+            </button>
+          </div>
+
+          <div className="hp-chatbot__messages">
+            {messages.map((message) => (
+              <div key={message.id} className={`hp-chatbot__message hp-chatbot__message--${message.role}`}>
+                <p>{message.text}</p>
+                {message.listings && message.listings.length > 0 && (
+                  <div className="hp-chatbot__listings">
+                    {message.listings.map((listing) => (
+                      <Link key={listing.id} to={`/listings/${listing.id}`} className="hp-chatbot__listing">
+                        <img
+                          src={listing.img}
+                          alt={listing.title}
+                          onError={(e) => {
+                            e.currentTarget.src = getFallbackPhoto(listing.category);
+                          }}
+                        />
+                        <span>
+                          <strong>{listing.title}</strong>
+                          <small>{numeral(listing.price).format('$0')} / night · {listing.rating.toFixed(2)}</small>
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="hp-chatbot__suggestions">
+            {suggestions.map((item) => (
+              <button key={item} type="button" onClick={() => send(item)}>
+                {item}
+              </button>
+            ))}
+          </div>
+
+          <div className="hp-chatbot__composer">
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && send()}
+              placeholder="Ask for a stay..."
+            />
+            <button type="button" onClick={() => send()} aria-label="Send message">
+              <FaPaperPlane />
+            </button>
+          </div>
+        </section>
+      )}
+
+      <button
+        className="hp-chatbot__fab"
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-label={open ? 'Close chat assistant' : 'Open chat assistant'}
+      >
+        {open ? <FaTimes /> : <FaCommentDots />}
+      </button>
+    </div>
+  );
+}
+
 export default function HomePage() {
   const navigate = useNavigate();
   const { data: listings = [] } = useListings();
@@ -312,6 +457,7 @@ export default function HomePage() {
           </>
         )}
       </div>
+      <HomeChatbot listings={listings} />
     </div>
   );
 }

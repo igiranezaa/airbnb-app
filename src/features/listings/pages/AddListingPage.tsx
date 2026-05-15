@@ -297,6 +297,10 @@ export default function AddListingPage() {
       toast.error('Please enter a valid nightly price.');
       return;
     }
+    if (files.length < 5) {
+      toast.error('Please upload at least 5 photos for this listing.');
+      return;
+    }
     const location = [city, stateVal, address].filter(Boolean).join(', ');
     createListing(
       {

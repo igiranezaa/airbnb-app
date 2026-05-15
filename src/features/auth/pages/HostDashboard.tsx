@@ -697,9 +697,11 @@ function AddListingForm({ userId, onSuccess }: { userId: string; onSuccess: () =
   }
   async function uploadPhotos(listingId: string) {
     if (!photoFiles.length) return;
-    const form = new FormData();
-    photoFiles.slice(0, 5).forEach((f) => form.append('images', f));
-    await api.post(`/listings/${listingId}/photos`, form, { headers: { 'Content-Type': 'multipart/form-data' } });
+    for (let i = 0; i < photoFiles.length; i += 5) {
+      const form = new FormData();
+      photoFiles.slice(i, i + 5).forEach((f) => form.append('images', f));
+      await api.post(`/listings/${listingId}/photos`, form, { headers: { 'Content-Type': 'multipart/form-data' } });
+    }
   }
   function toggleAmenity(a: string) { setAmenities((p) => p.includes(a) ? p.filter((x) => x !== a) : [...p, a]); }
   function addSchedule() { setScheduleItems((p) => [...p, { id: Date.now(), date: '', time: '', place: '', address: '' }]); }
@@ -716,6 +718,9 @@ function AddListingForm({ userId, onSuccess }: { userId: string; onSuccess: () =
     const pricePerNight = pricingPlans[0]?.price ? Number(pricingPlans[0].price) : 0;
     if (!pricePerNight || pricePerNight < 1) {
       toast.error('Please add a price in the Pricing plan section.'); return;
+    }
+    if (photoFiles.length < 5) {
+      toast.error('Please upload at least 5 photos for this listing.'); return;
     }
     const location = [address, apt, city, stateVal, zip, country].filter(Boolean).join(', ');
     createListing(

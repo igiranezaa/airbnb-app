@@ -183,8 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function register(name: string, email: string, username: string, password: string, role: string): Promise<boolean> {
     try {
       await api.post('/auth/register', { name, email, username, password, role });
-      const result = await login(email, password);
-      return result === true;
+      return true;
     } catch {
       return false;
     }
