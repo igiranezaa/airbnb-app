@@ -2073,10 +2073,121 @@ html.dark .rbk-modal__btn--cancel:hover:not(:disabled) { background: #30363d; }
   margin-bottom: 4px;
 }
 
+.edit-listing-photos {
+  margin: 0 0 1rem;
+  padding: 14px;
+  border: 1px solid #eee4e1;
+  border-radius: 8px;
+  background: #fffaf8;
+}
+
+.edit-listing-photos__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.edit-listing-photos__add {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid #ef4f38;
+  border-radius: 999px;
+  background: #fff;
+  color: #ef4f38;
+  padding: 8px 13px;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.edit-listing-photos__hint {
+  margin: 4px 0 12px;
+  color: #8a7f7b;
+  font-size: 0.78rem;
+}
+
+.edit-listing-photos__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 10px;
+}
+
+.edit-listing-photo {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f1f2f4;
+}
+
+.edit-listing-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.edit-listing-photo button {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(18, 18, 18, 0.72);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.edit-listing-photo__cover {
+  position: absolute;
+  left: 7px;
+  top: 7px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #ef4f38;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.edit-listing-photo--new {
+  outline: 2px solid #ef4f38;
+  outline-offset: -2px;
+}
+
+.edit-listing-photos__empty {
+  min-height: 108px;
+  border: 1.5px dashed #e5b1a8;
+  border-radius: 8px;
+  background: #fff;
+  color: #ef4f38;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
 @media (max-width: 600px) {
   .rbk-modal--wide { padding: 20px 16px 18px; }
   .edit-listing-row { grid-template-columns: 1fr; }
   .edit-listing-row:has(.edit-listing-field--sm:nth-child(4)) {
     grid-template-columns: 1fr 1fr;
+  }
+  .edit-listing-photos__head {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

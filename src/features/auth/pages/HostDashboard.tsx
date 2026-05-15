@@ -14,6 +14,7 @@ import { useHostListings, useCreateListing, useUpdateListing, useDeleteListing, 
 import { useBookings, useUpdateBookingStatus } from '../../bookings/hooks/useBookings';
 import MessagesPanel from '../../bookings/components/MessagesPanel';
 import type { Booking } from '../../bookings/hooks/useBookings';
+import { getFallbackPhoto } from '../../listings/utils/photos';
 import DashboardTopbar from '../components/DashboardTopbar';
 import EditProfileSection from '../components/EditProfileSection';
 import Spinner from '../../../shared/components/Spinner';
@@ -25,13 +26,6 @@ type HostSection = 'overview' | 'listings' | 'bookings' | 'reviews' | 'add-listi
 
 const TYPE_LABELS: Record<string, string> = {
   APARTMENT: 'Apartment', HOUSE: 'House', VILLA: 'Villa', CABIN: 'Cabin',
-};
-
-const TYPE_FALLBACK_IMG: Record<string, string> = {
-  VILLA:     'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=400&h=260&fit=crop',
-  CABIN:     'https://images.unsplash.com/photo-1542718610-a1d656d1884c?w=400&h=260&fit=crop',
-  APARTMENT: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400&h=260&fit=crop',
-  HOUSE:     'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=400&h=260&fit=crop',
 };
 
 const visitorReviews = [
@@ -82,8 +76,10 @@ function HostOverview({ listings, bookings }: { listings: HostListing[]; booking
 }
 
 function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoading: boolean }) {
+  const queryClient = useQueryClient();
   const { mutate: updateListing, isPending: isUpdating } = useUpdateListing();
   const { mutate: deleteListing, isPending: isDeleting } = useDeleteListing();
+  const editFileRef = useRef<HTMLInputElement>(null);
 
   // ── Edit state ──────────────────────────────────────────────────────────────
   const [editTarget, setEditTarget] = useState<HostListing | null>(null);
@@ -97,6 +93,10 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
   const [editCleaningFee, setEditCleaningFee] = useState('');
   const [editMinNights, setEditMinNights] = useState('');
   const [editInstant, setEditInstant] = useState(false);
+  const [editPhotos, setEditPhotos] = useState<string[]>([]);
+  const [editPhotoFiles, setEditPhotoFiles] = useState<File[]>([]);
+  const [editPhotoPreviews, setEditPhotoPreviews] = useState<string[]>([]);
+  const [isUploadingEditPhotos, setIsUploadingEditPhotos] = useState(false);
 
   // ── Delete confirm state ─────────────────────────────────────────────────────
   const [deleteTarget, setDeleteTarget] = useState<HostListing | null>(null);
@@ -123,6 +123,53 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
     setEditCleaningFee(String(l.cleaningFee));
     setEditMinNights(String(l.minNights));
     setEditInstant(l.instantBook);
+    setEditPhotos(l.photos ?? []);
+    setEditPhotoFiles([]);
+    setEditPhotoPreviews([]);
+  }
+
+  function closeEdit() {
+    setEditTarget(null);
+    setEditPhotoFiles([]);
+    setEditPhotoPreviews((prev) => {
+      prev.forEach((src) => URL.revokeObjectURL(src));
+      return [];
+    });
+  }
+
+  function addEditFiles(incoming: FileList | null) {
+    if (!incoming) return;
+    const MAX_SIZE = 20 * 1024 * 1024;
+    const valid: File[] = [];
+    const rejected: string[] = [];
+    Array.from(incoming).forEach((file) => {
+      if (file.size > MAX_SIZE) rejected.push(file.name);
+      else valid.push(file);
+    });
+    if (rejected.length) toast.error(`Skipped ${rejected.length} file(s) over 20 MB.`);
+    setEditPhotoFiles((prev) => [...prev, ...valid]);
+    setEditPhotoPreviews((prev) => [...prev, ...valid.map((file) => URL.createObjectURL(file))]);
+  }
+
+  function removeExistingPhoto(index: number) {
+    setEditPhotos((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function removeNewPhoto(index: number) {
+    setEditPhotoFiles((prev) => prev.filter((_, i) => i !== index));
+    setEditPhotoPreviews((prev) => {
+      const target = prev[index];
+      if (target) URL.revokeObjectURL(target);
+      return prev.filter((_, i) => i !== index);
+    });
+  }
+
+  async function uploadEditPhotos(listingId: string) {
+    for (let i = 0; i < editPhotoFiles.length; i += 5) {
+      const form = new FormData();
+      editPhotoFiles.slice(i, i + 5).forEach((file) => form.append('images', file));
+      await api.post(`/listings/${listingId}/photos`, form, { headers: { 'Content-Type': 'multipart/form-data' } });
+    }
   }
 
   function toggleEditAmenity(a: string) {
@@ -134,6 +181,9 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
     if (!editTarget) return;
     if (!editTitle.trim() || !editPrice || !editLocation.trim()) {
       toast.error('Title, location and price are required.'); return;
+    }
+    if (editPhotos.length + editPhotoFiles.length === 0) {
+      toast.error('Please keep or upload at least one listing photo.'); return;
     }
     updateListing(
       {
@@ -148,9 +198,26 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
         cleaningFee: editCleaningFee !== '' ? Number(editCleaningFee) : undefined,
         minNights: editMinNights !== '' ? Number(editMinNights) : undefined,
         instantBook: editInstant,
+        photos: editPhotos,
       },
       {
-        onSuccess: () => { toast.success('Listing updated!'); setEditTarget(null); },
+        onSuccess: async () => {
+          try {
+            if (editPhotoFiles.length) {
+              setIsUploadingEditPhotos(true);
+              await uploadEditPhotos(editTarget.id);
+              await queryClient.invalidateQueries({ queryKey: ['host-listings'] });
+              await queryClient.invalidateQueries({ queryKey: ['listings'] });
+              await queryClient.invalidateQueries({ queryKey: ['listing', editTarget.id] });
+            }
+            toast.success('Listing updated!');
+            closeEdit();
+          } catch {
+            toast.error('Listing details saved, but photo upload failed.');
+          } finally {
+            setIsUploadingEditPhotos(false);
+          }
+        },
         onError: () => toast.error('Failed to update listing.'),
       }
     );
@@ -179,9 +246,9 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
             <article key={l.id} className="db-listing-row">
               <img
                 className="db-listing-row__thumb"
-                src={l.photos?.[0] ?? TYPE_FALLBACK_IMG[l.type] ?? TYPE_FALLBACK_IMG.APARTMENT}
+                src={l.photos?.[0] ?? getFallbackPhoto()}
                 alt={l.title}
-                onError={(e) => { (e.target as HTMLImageElement).src = TYPE_FALLBACK_IMG.APARTMENT; }}
+                onError={(e) => { (e.target as HTMLImageElement).src = getFallbackPhoto(); }}
               />
               <div className="db-listing-row__content">
                 <div className="db-listing-row__meta-row">
@@ -223,9 +290,9 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
 
       {/* ── Edit listing modal ─────────────────────────────────────────────── */}
       {editTarget && (
-        <div className="rbk-modal-overlay" onClick={() => setEditTarget(null)}>
+        <div className="rbk-modal-overlay" onClick={closeEdit}>
           <div className="rbk-modal rbk-modal--wide" onClick={(e) => e.stopPropagation()}>
-            <button className="rbk-modal__close" onClick={() => setEditTarget(null)} aria-label="Close"><FaTimes /></button>
+            <button className="rbk-modal__close" onClick={closeEdit} aria-label="Close"><FaTimes /></button>
             <h3 className="rbk-modal__title">Edit Listing</h3>
             <p style={{ fontSize: '0.8rem', color: '#888', marginBottom: '1.25rem' }}>ID: {editTarget.id}</p>
 
@@ -308,6 +375,56 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
                 </div>
               </div>
 
+              {/* Photos */}
+              <div className="edit-listing-photos">
+                <div className="edit-listing-photos__head">
+                  <label className="edit-listing-label">Listing pictures</label>
+                  <button type="button" className="edit-listing-photos__add" onClick={() => editFileRef.current?.click()}>
+                    <FaCloudUploadAlt /> Upload photos
+                  </button>
+                  <input
+                    ref={editFileRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/heic,image/webp"
+                    multiple
+                    hidden
+                    onChange={(e) => {
+                      addEditFiles(e.target.files);
+                      e.target.value = '';
+                    }}
+                  />
+                </div>
+                <p className="edit-listing-photos__hint">
+                  Existing photos stay in order. Remove photos you do not want, then add new ones.
+                </p>
+                <div className="edit-listing-photos__grid">
+                  {editPhotos.map((src, index) => (
+                    <div key={`${src}-${index}`} className="edit-listing-photo">
+                      <img src={src} alt={`Listing photo ${index + 1}`} onError={(e) => { e.currentTarget.src = getFallbackPhoto(); }} />
+                      {index === 0 && <span className="edit-listing-photo__cover">Cover</span>}
+                      <button type="button" onClick={() => removeExistingPhoto(index)} aria-label="Remove photo">
+                        <FaTimes />
+                      </button>
+                    </div>
+                  ))}
+                  {editPhotoPreviews.map((src, index) => (
+                    <div key={src} className="edit-listing-photo edit-listing-photo--new">
+                      <img src={src} alt={`New listing photo ${index + 1}`} />
+                      <span className="edit-listing-photo__cover">New</span>
+                      <button type="button" onClick={() => removeNewPhoto(index)} aria-label="Remove new photo">
+                        <FaTimes />
+                      </button>
+                    </div>
+                  ))}
+                  {editPhotos.length + editPhotoPreviews.length === 0 && (
+                    <button type="button" className="edit-listing-photos__empty" onClick={() => editFileRef.current?.click()}>
+                      <FaImages />
+                      Add listing photos
+                    </button>
+                  )}
+                </div>
+              </div>
+
               {/* Instant book toggle */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', margin: '0.75rem 0 1rem' }}>
                 <input
@@ -356,11 +473,11 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
               </div>
 
               <div className="rbk-modal__actions">
-                <button type="button" className="rbk-modal__btn rbk-modal__btn--cancel" onClick={() => setEditTarget(null)}>
+                <button type="button" className="rbk-modal__btn rbk-modal__btn--cancel" onClick={closeEdit}>
                   Cancel
                 </button>
-                <button type="submit" className="rbk-modal__btn rbk-modal__btn--confirm" disabled={isUpdating}>
-                  {isUpdating ? 'Saving…' : 'Save changes'}
+                <button type="submit" className="rbk-modal__btn rbk-modal__btn--confirm" disabled={isUpdating || isUploadingEditPhotos}>
+                  {isUpdating || isUploadingEditPhotos ? 'Saving…' : 'Save changes'}
                 </button>
               </div>
             </form>
