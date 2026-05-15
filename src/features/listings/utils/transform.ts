@@ -1,4 +1,5 @@
 import type { Listing, ListingType, ListingCategory, CancellationPolicy } from '../types';
+import { getListingPhotos } from './photos';
 
 export interface BackendListing {
   id: string;
@@ -89,6 +90,7 @@ function inferCoordinates(location: string): { lat?: number; lng?: number } {
 export function transformListing(b: BackendListing): Listing {
   const category = TYPE_TO_CATEGORY[b.type] ?? 'city';
   const firstPhoto = b.photos?.[0];
+  const photos = getListingPhotos(category, b.photos, firstPhoto);
   const inferredCoords = inferCoordinates(b.location ?? '');
   const lat = toCoordinate(b.latitude) ?? toCoordinate(b.lat) ?? inferredCoords.lat;
   const lng = toCoordinate(b.longitude) ?? toCoordinate(b.lng) ?? inferredCoords.lng;
@@ -103,8 +105,8 @@ export function transformListing(b: BackendListing): Listing {
     superhost: b.superhost ?? false,
     available: true,
     availableFrom: b.createdAt.slice(0, 10),
-    img: firstPhoto ?? CATEGORY_IMAGES[category],
-    photos: b.photos ?? [],
+    img: photos[0] ?? CATEGORY_IMAGES[category],
+    photos,
     category,
     rooms: b.rooms ?? 1,
     beds: b.beds ?? 1,
