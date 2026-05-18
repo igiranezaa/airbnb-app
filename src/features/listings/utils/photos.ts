@@ -7,7 +7,6 @@ export const MAX_LISTING_PHOTOS = 100;
 export const LISTING_PHOTO_UPLOAD_BATCH_SIZE = 5;
 const FALLBACK_PHOTO_MAX_DIMENSION = 1400;
 const FALLBACK_PHOTO_QUALITY = 0.82;
-
 type PhotoDataUrlOptions = {
   maxDimension?: number;
   quality?: number;
@@ -49,8 +48,9 @@ export function getListingPhotos(
   return result;
 }
 
-function buildPhotoFormData(files: File[], fieldName: string): FormData {
+function buildPhotoFormData(files: File[], fieldName: string, keepPhotos?: string[]): FormData {
   const form = new FormData();
+  if (keepPhotos) form.append('keepPhotos', JSON.stringify(keepPhotos));
   files.forEach((file) => form.append(fieldName, file));
   return form;
 }
@@ -91,6 +91,17 @@ async function uploadPhotoBatch(client: UploadClient, listingId: string, files: 
   }
 }
 
+async function uploadPhotoBatchWithKeep(client: UploadClient, listingId: string, files: File[], keepPhotos: string[]) {
+  const endpoint = `/listings/${listingId}/photos`;
+
+  try {
+    return await client.post(endpoint, buildPhotoFormData(files, 'images', keepPhotos));
+  } catch (error) {
+    if (!shouldRetryPhotoField(error)) throw error;
+    return client.post(endpoint, buildPhotoFormData(files, 'photos', keepPhotos));
+  }
+}
+
 function unwrapResponseData(response: unknown): unknown {
   if (typeof response === 'object' && response != null && 'data' in response) {
     return (response as AxiosLikeResponse).data;
@@ -127,13 +138,22 @@ export function getUploadedPhotoUrls(response: unknown): string[] {
   return [...urls];
 }
 
-export async function uploadListingPhotos(client: UploadClient, listingId: string, files: File[]): Promise<string[]> {
+export async function uploadListingPhotos(
+  client: UploadClient,
+  listingId: string,
+  files: File[],
+  keepPhotos?: string[]
+): Promise<string[]> {
   if (!files.length) return [];
 
   const uploadedUrls: string[] = [];
+  const retainedPhotos = [...new Set(keepPhotos ?? [])];
 
   for (let i = 0; i < files.length; i += LISTING_PHOTO_UPLOAD_BATCH_SIZE) {
-    const response = await uploadPhotoBatch(client, listingId, files.slice(i, i + LISTING_PHOTO_UPLOAD_BATCH_SIZE));
+    const batch = files.slice(i, i + LISTING_PHOTO_UPLOAD_BATCH_SIZE);
+    const response = keepPhotos
+      ? await uploadPhotoBatchWithKeep(client, listingId, batch, [...retainedPhotos, ...uploadedUrls])
+      : await uploadPhotoBatch(client, listingId, batch);
     uploadedUrls.push(...getUploadedPhotoUrls(response));
   }
 

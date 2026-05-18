@@ -30,8 +30,7 @@ const TYPE_LABELS: Record<string, string> = {
 
 const PHOTO_ACCEPT = 'image/jpeg,image/png,image/webp';
 const PHOTO_TYPES = new Set(PHOTO_ACCEPT.split(','));
-const MAX_LISTING_PHOTOS = 10;
-const EDIT_PHOTO_DATA_URL_OPTIONS = { maxDimension: 1000, quality: 0.72 };
+const MAX_LISTING_PHOTOS = 100;
 
 function getRequestErrorMessage(error: unknown): string {
   if (typeof error === 'object' && error != null && 'response' in error) {
@@ -272,8 +271,8 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
 
       let nextPhotos = [...new Set(editPhotos.filter(Boolean))];
       if (editPhotoFiles.length) {
-        const fallbackUrls = await getPhotoDataUrls(editPhotoFiles, EDIT_PHOTO_DATA_URL_OPTIONS);
-        nextPhotos = [...new Set([...nextPhotos, ...fallbackUrls])];
+        const uploadedUrls = await uploadListingPhotos(api, editTarget.id, editPhotoFiles, nextPhotos);
+        nextPhotos = [...new Set([...nextPhotos, ...uploadedUrls])];
       }
 
       const updatePayload: Partial<CreateListingPayload> & { id?: string } = { ...payload };
