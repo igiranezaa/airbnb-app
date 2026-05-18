@@ -30,7 +30,7 @@ const TYPE_LABELS: Record<string, string> = {
 
 const PHOTO_ACCEPT = 'image/jpeg,image/png,image/webp,image/heic,image/heif';
 const PHOTO_TYPES = new Set(PHOTO_ACCEPT.split(','));
-const MAX_LISTING_PHOTOS = 5;
+const MAX_LISTING_PHOTOS = 100;
 
 const visitorReviews = [
   { name: 'Carol Guest', avatar: 'https://i.pravatar.cc/96?img=23', date: '25 Oct 2023', rating: 4.5, text: 'Wonderful place, super clean and modern!', helpful: 12 },
@@ -186,8 +186,11 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
     });
     if (unsupported.length) toast.error('Only JPG, PNG, WebP, HEIC, and HEIF photos are supported.');
     if (tooLarge.length) toast.error(`Skipped ${tooLarge.length} file(s) over 20 MB.`);
-    setEditPhotoFiles((prev) => [...prev, ...valid]);
-    setEditPhotoPreviews((prev) => [...prev, ...valid.map((file) => URL.createObjectURL(file))]);
+    const availableSlots = Math.max(0, MAX_LISTING_PHOTOS - editPhotos.length - editPhotoFiles.length);
+    const toAdd = valid.slice(0, availableSlots);
+    if (valid.length > toAdd.length) toast.error(`A listing can have at most ${MAX_LISTING_PHOTOS} photos.`);
+    setEditPhotoFiles((prev) => [...prev, ...toAdd]);
+    setEditPhotoPreviews((prev) => [...prev, ...toAdd.map((file) => URL.createObjectURL(file))]);
   }
 
   function removeExistingPhoto(index: number) {
@@ -252,16 +255,25 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
         instantBook: editInstant,
       };
 
-      payload.photos = [...new Set(editPhotos)];
+      let nextPhotos = [...new Set(editPhotos.filter(Boolean))];
+      if (editPhotoFiles.length) {
+        try {
+          const uploadedUrls = await uploadListingPhotos(api, editTarget.id, editPhotoFiles);
+          if (uploadedUrls.length) {
+            nextPhotos = [...new Set([...nextPhotos, ...uploadedUrls])];
+          } else {
+            throw new Error('Photo upload did not return URLs.');
+          }
+        } catch {
+          const fallbackUrls = await getPhotoDataUrls(editPhotoFiles);
+          nextPhotos = [...new Set([...nextPhotos, ...fallbackUrls])];
+        }
+      }
 
-      const formData = new FormData();
-      Object.entries(payload).forEach(([key, value]) => {
-        if (key === 'id' || value === undefined) return;
-        formData.append(key, Array.isArray(value) ? JSON.stringify(value) : String(value ?? ''));
+      await api.patch(`/listings/${editTarget.id}`, {
+        ...payload,
+        photos: nextPhotos,
       });
-      editPhotoFiles.forEach((file) => formData.append('images', file));
-
-      await api.patch(`/listings/${editTarget.id}`, formData);
       await queryClient.invalidateQueries({ queryKey: ['host-listings'] });
       await queryClient.invalidateQueries({ queryKey: ['listings'] });
       await queryClient.invalidateQueries({ queryKey: ['listing', editTarget.id] });
