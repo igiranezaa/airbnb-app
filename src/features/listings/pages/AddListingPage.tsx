@@ -228,8 +228,8 @@ export default function AddListingPage() {
   }
 
   async function uploadPhotos(listingId: string) {
-    if (!files.length || !config.apiUrl) return;
-    await uploadListingPhotos(api, listingId, files);
+    if (!files.length || !config.apiUrl) return [];
+    return uploadListingPhotos(api, listingId, files);
   }
 
   /* ── Amenity toggle ── */
@@ -338,11 +338,9 @@ export default function AddListingPage() {
               const listingId = response.data.id;
               setIsUploading(true);
               try {
-                const [uploadedUrls] = await Promise.all([
-                  uploadPhotos(listingId),
-                  saveBlockedDates(listingId),
-                ]);
-                if (uploadedUrls.length) {
+                const uploadedUrls = await uploadPhotos(listingId);
+                await saveBlockedDates(listingId);
+                if (uploadedUrls?.length) {
                   await api.patch(`/listings/${listingId}`, { photos: uploadedUrls });
                 }
                 await queryClient.invalidateQueries({ queryKey: ['host-listings'] });

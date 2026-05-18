@@ -2054,13 +2054,9 @@ html.dark .rbk-modal__btn--cancel:hover:not(:disabled) { background: #30363d; }
 
 .edit-listing-row {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 0.75rem;
   margin-bottom: 1rem;
-}
-
-.edit-listing-row:has(.edit-listing-field--sm:nth-child(4)) {
-  grid-template-columns: repeat(4, 1fr);
 }
 
 .edit-listing-field { display: flex; flex-direction: column; }
@@ -2183,9 +2179,6 @@ html.dark .rbk-modal__btn--cancel:hover:not(:disabled) { background: #30363d; }
 @media (max-width: 600px) {
   .rbk-modal--wide { padding: 20px 16px 18px; }
   .edit-listing-row { grid-template-columns: 1fr; }
-  .edit-listing-row:has(.edit-listing-field--sm:nth-child(4)) {
-    grid-template-columns: 1fr 1fr;
-  }
   .edit-listing-photos__head {
     align-items: flex-start;
     flex-direction: column;

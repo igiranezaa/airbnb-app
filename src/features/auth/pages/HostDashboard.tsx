@@ -28,8 +28,9 @@ const TYPE_LABELS: Record<string, string> = {
   APARTMENT: 'Apartment', HOUSE: 'House', VILLA: 'Villa', CABIN: 'Cabin',
 };
 
-const PHOTO_ACCEPT = 'image/jpeg,image/png,image/webp';
+const PHOTO_ACCEPT = 'image/jpeg,image/png,image/webp,image/heic,image/heif';
 const PHOTO_TYPES = new Set(PHOTO_ACCEPT.split(','));
+const MAX_LISTING_PHOTOS = 5;
 
 const visitorReviews = [
   { name: 'Carol Guest', avatar: 'https://i.pravatar.cc/96?img=23', date: '25 Oct 2023', rating: 4.5, text: 'Wonderful place, super clean and modern!', helpful: 12 },
@@ -80,7 +81,7 @@ function HostOverview({ listings, bookings }: { listings: HostListing[]; booking
 
 function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoading: boolean }) {
   const queryClient = useQueryClient();
-  const { mutate: updateListing, mutateAsync: updateListingAsync, isPending: isUpdating } = useUpdateListing();
+  const { mutate: updateListing, isPending: isUpdating } = useUpdateListing();
   const { mutate: deleteListing, isPending: isDeleting } = useDeleteListing();
   const editFileRef = useRef<HTMLInputElement>(null);
 
@@ -94,7 +95,23 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
   const [editDesc, setEditDesc] = useState('');
   const [editAmenities, setEditAmenities] = useState<string[]>([]);
   const [editCleaningFee, setEditCleaningFee] = useState('');
+  const [editWeekendPrice, setEditWeekendPrice] = useState('');
+  const [editWeeklyDiscount, setEditWeeklyDiscount] = useState('');
+  const [editMonthlyDiscount, setEditMonthlyDiscount] = useState('');
+  const [editExtraGuestFee, setEditExtraGuestFee] = useState('');
+  const [editServiceFeePercent, setEditServiceFeePercent] = useState('');
+  const [editTaxPercent, setEditTaxPercent] = useState('');
   const [editMinNights, setEditMinNights] = useState('');
+  const [editMaxNights, setEditMaxNights] = useState('');
+  const [editRooms, setEditRooms] = useState('');
+  const [editBeds, setEditBeds] = useState('');
+  const [editBathrooms, setEditBathrooms] = useState('');
+  const [editHouseRules, setEditHouseRules] = useState('');
+  const [editCheckInMethod, setEditCheckInMethod] = useState('');
+  const [editCheckOutMethod, setEditCheckOutMethod] = useState('');
+  const [editCancellationPolicy, setEditCancellationPolicy] = useState<CreateListingPayload['cancellationPolicy']>('FLEXIBLE');
+  const [editLatitude, setEditLatitude] = useState('');
+  const [editLongitude, setEditLongitude] = useState('');
   const [editInstant, setEditInstant] = useState(false);
   const [editPhotos, setEditPhotos] = useState<string[]>([]);
   const [editPhotoFiles, setEditPhotoFiles] = useState<File[]>([]);
@@ -123,9 +140,25 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
     setEditGuests(l.guests != null ? String(l.guests) : '');
     setEditDesc(l.description ?? '');
     setEditAmenities(l.amenities ?? []);
-    setEditCleaningFee(String(l.cleaningFee));
-    setEditMinNights(String(l.minNights));
-    setEditInstant(l.instantBook);
+    setEditCleaningFee(l.cleaningFee != null ? String(l.cleaningFee) : '');
+    setEditWeekendPrice(l.weekendPrice != null ? String(l.weekendPrice) : '');
+    setEditWeeklyDiscount(l.weeklyDiscount != null ? String(l.weeklyDiscount) : '');
+    setEditMonthlyDiscount(l.monthlyDiscount != null ? String(l.monthlyDiscount) : '');
+    setEditExtraGuestFee(l.extraGuestFee != null ? String(l.extraGuestFee) : '');
+    setEditServiceFeePercent(l.serviceFeePercent != null ? String(l.serviceFeePercent) : '');
+    setEditTaxPercent(l.taxPercent != null ? String(l.taxPercent) : '');
+    setEditMinNights(l.minNights != null ? String(l.minNights) : '');
+    setEditMaxNights(l.maxNights != null ? String(l.maxNights) : '');
+    setEditRooms(l.rooms != null ? String(l.rooms) : '');
+    setEditBeds(l.beds != null ? String(l.beds) : '');
+    setEditBathrooms(l.bathrooms != null ? String(l.bathrooms) : '');
+    setEditHouseRules(l.houseRules ?? '');
+    setEditCheckInMethod(l.checkInMethod ?? '');
+    setEditCheckOutMethod(l.checkOutMethod ?? '');
+    setEditCancellationPolicy(l.cancellationPolicy ?? 'FLEXIBLE');
+    setEditLatitude(l.latitude != null ? String(l.latitude) : '');
+    setEditLongitude(l.longitude != null ? String(l.longitude) : '');
+    setEditInstant(Boolean(l.instantBook));
     setEditPhotos(l.photos ?? []);
     setEditPhotoFiles([]);
     setEditPhotoPreviews([]);
@@ -151,7 +184,7 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
       else if (file.size > MAX_SIZE) tooLarge.push(file.name);
       else valid.push(file);
     });
-    if (unsupported.length) toast.error('Only JPG, PNG, and WebP photos are supported.');
+    if (unsupported.length) toast.error('Only JPG, PNG, WebP, HEIC, and HEIF photos are supported.');
     if (tooLarge.length) toast.error(`Skipped ${tooLarge.length} file(s) over 20 MB.`);
     setEditPhotoFiles((prev) => [...prev, ...valid]);
     setEditPhotoPreviews((prev) => [...prev, ...valid.map((file) => URL.createObjectURL(file))]);
@@ -170,10 +203,6 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
     });
   }
 
-  async function uploadEditPhotos(listingId: string) {
-    return uploadListingPhotos(api, listingId, editPhotoFiles);
-  }
-
   function toggleEditAmenity(a: string) {
     setEditAmenities((prev) => prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]);
   }
@@ -187,17 +216,12 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
     if (editPhotos.length + editPhotoFiles.length < MIN_LISTING_PHOTOS) {
       toast.error(`Please keep or upload at least ${MIN_LISTING_PHOTOS} listing photos.`); return;
     }
+    if (editPhotos.length + editPhotoFiles.length > MAX_LISTING_PHOTOS) {
+      toast.error(`A listing can have at most ${MAX_LISTING_PHOTOS} photos.`); return;
+    }
 
     setIsUploadingEditPhotos(true);
     try {
-      let newPhotoUrls: string[] = [];
-      if (editPhotoFiles.length) {
-        try {
-          newPhotoUrls = await uploadEditPhotos(editTarget.id);
-        } catch {
-          newPhotoUrls = await getPhotoDataUrls(editPhotoFiles);
-        }
-      }
       const payload: Partial<CreateListingPayload> & { id: string } = {
         id: editTarget.id,
         title: editTitle.trim(),
@@ -207,14 +231,37 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
         guests: editGuests ? Number(editGuests) : undefined,
         description: editDesc.trim() || undefined,
         amenities: editAmenities,
+        rooms: editRooms !== '' ? Number(editRooms) : undefined,
+        beds: editBeds !== '' ? Number(editBeds) : undefined,
+        bathrooms: editBathrooms !== '' ? Number(editBathrooms) : undefined,
         cleaningFee: editCleaningFee !== '' ? Number(editCleaningFee) : undefined,
+        weekendPrice: editWeekendPrice !== '' ? Number(editWeekendPrice) : null,
+        weeklyDiscount: editWeeklyDiscount !== '' ? Number(editWeeklyDiscount) : 0,
+        monthlyDiscount: editMonthlyDiscount !== '' ? Number(editMonthlyDiscount) : 0,
+        extraGuestFee: editExtraGuestFee !== '' ? Number(editExtraGuestFee) : 0,
+        serviceFeePercent: editServiceFeePercent !== '' ? Number(editServiceFeePercent) : 14,
+        taxPercent: editTaxPercent !== '' ? Number(editTaxPercent) : 0,
         minNights: editMinNights !== '' ? Number(editMinNights) : undefined,
+        maxNights: editMaxNights !== '' ? Number(editMaxNights) : null,
+        houseRules: editHouseRules.trim(),
+        checkInMethod: editCheckInMethod.trim(),
+        checkOutMethod: editCheckOutMethod.trim(),
+        cancellationPolicy: editCancellationPolicy,
+        latitude: editLatitude !== '' ? Number(editLatitude) : undefined,
+        longitude: editLongitude !== '' ? Number(editLongitude) : undefined,
         instantBook: editInstant,
       };
 
-      payload.photos = [...new Set([...editPhotos, ...newPhotoUrls])];
+      payload.photos = [...new Set(editPhotos)];
 
-      await updateListingAsync(payload);
+      const formData = new FormData();
+      Object.entries(payload).forEach(([key, value]) => {
+        if (key === 'id' || value === undefined) return;
+        formData.append(key, Array.isArray(value) ? JSON.stringify(value) : String(value ?? ''));
+      });
+      editPhotoFiles.forEach((file) => formData.append('images', file));
+
+      await api.patch(`/listings/${editTarget.id}`, formData);
       await queryClient.invalidateQueries({ queryKey: ['host-listings'] });
       await queryClient.invalidateQueries({ queryKey: ['listings'] });
       await queryClient.invalidateQueries({ queryKey: ['listing', editTarget.id] });
@@ -333,7 +380,7 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
                 />
               </div>
 
-              {/* Row 3: Price / Guests / Cleaning fee / Min nights */}
+              {/* Row 3: Price / occupancy */}
               <div className="edit-listing-row">
                 <div className="edit-listing-field edit-listing-field--sm">
                   <label className="edit-listing-label">Price / night ($) <span className="al-req">*</span></label>
@@ -358,24 +405,106 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
                   />
                 </div>
                 <div className="edit-listing-field edit-listing-field--sm">
-                  <label className="edit-listing-label">Cleaning fee ($)</label>
-                  <input
-                    className="al-input"
-                    type="number"
-                    min="0"
-                    value={editCleaningFee}
-                    onChange={(e) => setEditCleaningFee(e.target.value)}
-                  />
-                </div>
-                <div className="edit-listing-field edit-listing-field--sm">
-                  <label className="edit-listing-label">Min nights</label>
+                  <label className="edit-listing-label">Rooms</label>
                   <input
                     className="al-input"
                     type="number"
                     min="1"
-                    value={editMinNights}
-                    onChange={(e) => setEditMinNights(e.target.value)}
+                    value={editRooms}
+                    onChange={(e) => setEditRooms(e.target.value)}
                   />
+                </div>
+                <div className="edit-listing-field edit-listing-field--sm">
+                  <label className="edit-listing-label">Beds</label>
+                  <input
+                    className="al-input"
+                    type="number"
+                    min="1"
+                    value={editBeds}
+                    onChange={(e) => setEditBeds(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="edit-listing-row">
+                <div className="edit-listing-field edit-listing-field--sm">
+                  <label className="edit-listing-label">Bathrooms</label>
+                  <input className="al-input" type="number" min="1" value={editBathrooms} onChange={(e) => setEditBathrooms(e.target.value)} />
+                </div>
+                <div className="edit-listing-field edit-listing-field--sm">
+                  <label className="edit-listing-label">Min nights</label>
+                  <input className="al-input" type="number" min="1" value={editMinNights} onChange={(e) => setEditMinNights(e.target.value)} />
+                </div>
+                <div className="edit-listing-field edit-listing-field--sm">
+                  <label className="edit-listing-label">Max nights</label>
+                  <input className="al-input" type="number" min="1" value={editMaxNights} onChange={(e) => setEditMaxNights(e.target.value)} />
+                </div>
+                <div className="edit-listing-field edit-listing-field--sm">
+                  <label className="edit-listing-label">Cancellation</label>
+                  <select
+                    className="al-select"
+                    value={editCancellationPolicy}
+                    onChange={(e) => setEditCancellationPolicy(e.target.value as CreateListingPayload['cancellationPolicy'])}
+                  >
+                    <option value="FLEXIBLE">Flexible</option>
+                    <option value="MODERATE">Moderate</option>
+                    <option value="STRICT">Strict</option>
+                    <option value="NON_REFUNDABLE">Non-refundable</option>
+                    <option value="LONG_TERM">Long-term</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="edit-listing-row">
+                <div className="edit-listing-field edit-listing-field--sm">
+                  <label className="edit-listing-label">Cleaning fee ($)</label>
+                  <input className="al-input" type="number" min="0" value={editCleaningFee} onChange={(e) => setEditCleaningFee(e.target.value)} />
+                </div>
+                <div className="edit-listing-field edit-listing-field--sm">
+                  <label className="edit-listing-label">Weekend price ($)</label>
+                  <input className="al-input" type="number" min="0" value={editWeekendPrice} onChange={(e) => setEditWeekendPrice(e.target.value)} />
+                </div>
+                <div className="edit-listing-field edit-listing-field--sm">
+                  <label className="edit-listing-label">Extra guest fee ($)</label>
+                  <input className="al-input" type="number" min="0" value={editExtraGuestFee} onChange={(e) => setEditExtraGuestFee(e.target.value)} />
+                </div>
+                <div className="edit-listing-field edit-listing-field--sm">
+                  <label className="edit-listing-label">Service fee (%)</label>
+                  <input className="al-input" type="number" min="0" value={editServiceFeePercent} onChange={(e) => setEditServiceFeePercent(e.target.value)} />
+                </div>
+              </div>
+
+              <div className="edit-listing-row">
+                <div className="edit-listing-field edit-listing-field--sm">
+                  <label className="edit-listing-label">Weekly discount (%)</label>
+                  <input className="al-input" type="number" min="0" value={editWeeklyDiscount} onChange={(e) => setEditWeeklyDiscount(e.target.value)} />
+                </div>
+                <div className="edit-listing-field edit-listing-field--sm">
+                  <label className="edit-listing-label">Monthly discount (%)</label>
+                  <input className="al-input" type="number" min="0" value={editMonthlyDiscount} onChange={(e) => setEditMonthlyDiscount(e.target.value)} />
+                </div>
+                <div className="edit-listing-field edit-listing-field--sm">
+                  <label className="edit-listing-label">Tax (%)</label>
+                  <input className="al-input" type="number" min="0" value={editTaxPercent} onChange={(e) => setEditTaxPercent(e.target.value)} />
+                </div>
+                <div className="edit-listing-field edit-listing-field--sm">
+                  <label className="edit-listing-label">Latitude</label>
+                  <input className="al-input" type="number" step="any" value={editLatitude} onChange={(e) => setEditLatitude(e.target.value)} />
+                </div>
+              </div>
+
+              <div className="edit-listing-row">
+                <div className="edit-listing-field edit-listing-field--sm">
+                  <label className="edit-listing-label">Longitude</label>
+                  <input className="al-input" type="number" step="any" value={editLongitude} onChange={(e) => setEditLongitude(e.target.value)} />
+                </div>
+                <div className="edit-listing-field">
+                  <label className="edit-listing-label">Check-in method</label>
+                  <input className="al-input" type="text" value={editCheckInMethod} onChange={(e) => setEditCheckInMethod(e.target.value)} />
+                </div>
+                <div className="edit-listing-field">
+                  <label className="edit-listing-label">Check-out method</label>
+                  <input className="al-input" type="text" value={editCheckOutMethod} onChange={(e) => setEditCheckOutMethod(e.target.value)} />
                 </div>
               </div>
 
@@ -450,6 +579,17 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
                   maxLength={4000}
                   value={editDesc}
                   onChange={(e) => setEditDesc(e.target.value)}
+                />
+              </div>
+
+              <div className="edit-listing-field" style={{ marginBottom: '1rem' }}>
+                <label className="edit-listing-label">House rules</label>
+                <textarea
+                  className="al-textarea"
+                  rows={3}
+                  maxLength={2000}
+                  value={editHouseRules}
+                  onChange={(e) => setEditHouseRules(e.target.value)}
                 />
               </div>
 

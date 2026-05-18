@@ -20,7 +20,7 @@ export interface CreateListingPayload {
   checkOutMethod?: string;
   instantBook?: boolean;
   cancellationPolicy?: CancellationPolicy;
-  weekendPrice?: number;
+  weekendPrice?: number | null;
   weeklyDiscount?: number;
   monthlyDiscount?: number;
   extraGuestFee?: number;
@@ -28,7 +28,7 @@ export interface CreateListingPayload {
   serviceFeePercent?: number;
   taxPercent?: number;
   minNights?: number;
-  maxNights?: number;
+  maxNights?: number | null;
   published?: boolean;
   latitude?: number;
   longitude?: number;
@@ -57,6 +57,17 @@ export interface HostListing {
   rooms?: number;
   beds?: number;
   bathrooms?: number;
+  houseRules?: string | null;
+  checkInMethod?: string | null;
+  checkOutMethod?: string | null;
+  cancellationPolicy?: CancellationPolicy;
+  weekendPrice?: number | null;
+  weeklyDiscount?: number;
+  monthlyDiscount?: number;
+  extraGuestFee?: number;
+  serviceFeePercent?: number;
+  taxPercent?: number;
+  maxNights?: number | null;
 }
 
 export function useHostListings(userId?: string) {
