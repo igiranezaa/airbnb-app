@@ -28,9 +28,24 @@ const TYPE_LABELS: Record<string, string> = {
   APARTMENT: 'Apartment', HOUSE: 'House', VILLA: 'Villa', CABIN: 'Cabin',
 };
 
-const PHOTO_ACCEPT = 'image/jpeg,image/png,image/webp,image/heic,image/heif';
+const PHOTO_ACCEPT = 'image/jpeg,image/png,image/webp';
 const PHOTO_TYPES = new Set(PHOTO_ACCEPT.split(','));
-const MAX_LISTING_PHOTOS = 100;
+const MAX_LISTING_PHOTOS = 10;
+const EDIT_PHOTO_DATA_URL_OPTIONS = { maxDimension: 1000, quality: 0.72 };
+
+function getRequestErrorMessage(error: unknown): string {
+  if (typeof error === 'object' && error != null && 'response' in error) {
+    const data = (error as { response?: { data?: unknown } }).response?.data;
+    if (typeof data === 'string') return data;
+    if (typeof data === 'object' && data != null) {
+      const record = data as Record<string, unknown>;
+      if (typeof record.message === 'string') return record.message;
+      if (typeof record.error === 'string') return record.error;
+    }
+  }
+
+  return error instanceof Error ? error.message : '';
+}
 
 const visitorReviews = [
   { name: 'Carol Guest', avatar: 'https://i.pravatar.cc/96?img=23', date: '25 Oct 2023', rating: 4.5, text: 'Wonderful place, super clean and modern!', helpful: 12 },
@@ -184,7 +199,7 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
       else if (file.size > MAX_SIZE) tooLarge.push(file.name);
       else valid.push(file);
     });
-    if (unsupported.length) toast.error('Only JPG, PNG, WebP, HEIC, and HEIF photos are supported.');
+    if (unsupported.length) toast.error('Only JPG, PNG, and WebP photos are supported.');
     if (tooLarge.length) toast.error(`Skipped ${tooLarge.length} file(s) over 20 MB.`);
     const availableSlots = Math.max(0, MAX_LISTING_PHOTOS - editPhotos.length - editPhotoFiles.length);
     const toAdd = valid.slice(0, availableSlots);
@@ -257,21 +272,14 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
 
       let nextPhotos = [...new Set(editPhotos.filter(Boolean))];
       if (editPhotoFiles.length) {
-        try {
-          const uploadedUrls = await uploadListingPhotos(api, editTarget.id, editPhotoFiles);
-          if (uploadedUrls.length) {
-            nextPhotos = [...new Set([...nextPhotos, ...uploadedUrls])];
-          } else {
-            throw new Error('Photo upload did not return URLs.');
-          }
-        } catch {
-          const fallbackUrls = await getPhotoDataUrls(editPhotoFiles);
-          nextPhotos = [...new Set([...nextPhotos, ...fallbackUrls])];
-        }
+        const fallbackUrls = await getPhotoDataUrls(editPhotoFiles, EDIT_PHOTO_DATA_URL_OPTIONS);
+        nextPhotos = [...new Set([...nextPhotos, ...fallbackUrls])];
       }
 
+      const updatePayload: Partial<CreateListingPayload> & { id?: string } = { ...payload };
+      delete updatePayload.id;
       await api.patch(`/listings/${editTarget.id}`, {
-        ...payload,
+        ...updatePayload,
         photos: nextPhotos,
       });
       await queryClient.invalidateQueries({ queryKey: ['host-listings'] });
@@ -279,8 +287,9 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
       await queryClient.invalidateQueries({ queryKey: ['listing', editTarget.id] });
       toast.success('Listing updated!');
       closeEdit();
-    } catch {
-      toast.error('Failed to save listing photos. Please try again.');
+    } catch (error) {
+      const message = getRequestErrorMessage(error);
+      toast.error(message || 'Failed to save listing photos. Please try again.');
     } finally {
       setIsUploadingEditPhotos(false);
     }
@@ -540,7 +549,7 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
                   />
                 </div>
                 <p className="edit-listing-photos__hint">
-                  Keep at least {MIN_LISTING_PHOTOS} photos. Existing photos stay in order; remove photos you do not want, then add new ones.
+                  Keep at least {MIN_LISTING_PHOTOS} photos and up to {MAX_LISTING_PHOTOS}. Existing photos stay in order; remove photos you do not want, then add new ones.
                 </p>
                 <div className="edit-listing-photos__grid">
                   {editPhotos.map((src, index) => (

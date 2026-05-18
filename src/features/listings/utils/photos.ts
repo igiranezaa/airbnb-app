@@ -8,6 +8,11 @@ export const LISTING_PHOTO_UPLOAD_BATCH_SIZE = 5;
 const FALLBACK_PHOTO_MAX_DIMENSION = 1400;
 const FALLBACK_PHOTO_QUALITY = 0.82;
 
+type PhotoDataUrlOptions = {
+  maxDimension?: number;
+  quality?: number;
+};
+
 export const LISTING_PLACEHOLDER_IMAGE =
   'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22800%22 height=%22600%22 viewBox=%220 0 800 600%22%3E%3Crect width=%22800%22 height=%22600%22 fill=%22%23f3f4f6%22/%3E%3Cpath d=%22M235 380l92-112 73 88 48-58 117 142H235z%22 fill=%22%23d7dce2%22/%3E%3Ccircle cx=%22543%22 cy=%22202%22 r=%2238%22 fill=%22%23d7dce2%22/%3E%3Ctext x=%22400%22 y=%22505%22 text-anchor=%22middle%22 font-family=%22Arial, sans-serif%22 font-size=%2232%22 font-weight=%22700%22 fill=%22%2399a1ad%22%3EPhoto unavailable%3C/text%3E%3C/svg%3E';
 
@@ -153,12 +158,14 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
-async function fileToCompressedDataUrl(file: File): Promise<string> {
+async function fileToCompressedDataUrl(file: File, options: PhotoDataUrlOptions = {}): Promise<string> {
   const originalDataUrl = await readFileAsDataUrl(file);
   const image = await loadImage(originalDataUrl);
+  const maxDimension = options.maxDimension ?? FALLBACK_PHOTO_MAX_DIMENSION;
+  const quality = options.quality ?? FALLBACK_PHOTO_QUALITY;
   const scale = Math.min(
     1,
-    FALLBACK_PHOTO_MAX_DIMENSION / Math.max(image.naturalWidth, image.naturalHeight)
+    maxDimension / Math.max(image.naturalWidth, image.naturalHeight)
   );
   const width = Math.max(1, Math.round(image.naturalWidth * scale));
   const height = Math.max(1, Math.round(image.naturalHeight * scale));
@@ -170,9 +177,9 @@ async function fileToCompressedDataUrl(file: File): Promise<string> {
   if (!context) return originalDataUrl;
 
   context.drawImage(image, 0, 0, width, height);
-  return canvas.toDataURL('image/jpeg', FALLBACK_PHOTO_QUALITY);
+  return canvas.toDataURL('image/jpeg', quality);
 }
 
-export async function getPhotoDataUrls(files: File[]): Promise<string[]> {
-  return Promise.all(files.map((file) => fileToCompressedDataUrl(file)));
+export async function getPhotoDataUrls(files: File[], options?: PhotoDataUrlOptions): Promise<string[]> {
+  return Promise.all(files.map((file) => fileToCompressedDataUrl(file, options)));
 }
