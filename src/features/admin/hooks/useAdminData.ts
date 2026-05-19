@@ -83,6 +83,21 @@ export interface AuditLog {
   admin: { id: string; name: string; email: string };
 }
 
+export interface AdminListing {
+  id: string;
+  title: string;
+  location: string;
+  type: 'APARTMENT' | 'HOUSE' | 'VILLA' | 'CABIN';
+  pricePerNight: number;
+  rating: number | null;
+  published: boolean;
+  approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
+  rejectionReason: string | null;
+  createdAt: string;
+  host?: { id: string; name: string; email: string };
+  _count?: { bookings: number; reviews: number };
+}
+
 // ── FR-073: Dashboard Stats ──────────────────────────────────────────────────
 
 export function useAdminDashboardStats() {
@@ -167,7 +182,46 @@ export function useDeleteListing() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.delete(`/listings/${id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['listings'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['listings'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-listings'] });
+      queryClient.invalidateQueries({ queryKey: ['listing-stats'] });
+    },
+  });
+}
+
+export function useAdminListings() {
+  return useQuery<AdminListing[]>({
+    queryKey: ['admin-listings'],
+    queryFn: async () => {
+      const { data } = await api.get<AdminListing[]>('/admin/listings');
+      return data;
+    },
+  });
+}
+
+export function useApproveListing() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.patch(`/admin/listings/${id}/approve`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-listings'] });
+      queryClient.invalidateQueries({ queryKey: ['listings'] });
+      queryClient.invalidateQueries({ queryKey: ['listing-stats'] });
+    },
+  });
+}
+
+export function useRejectListing() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+      api.patch(`/admin/listings/${id}/reject`, { reason }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-listings'] });
+      queryClient.invalidateQueries({ queryKey: ['listings'] });
+      queryClient.invalidateQueries({ queryKey: ['listing-stats'] });
+    },
   });
 }
 

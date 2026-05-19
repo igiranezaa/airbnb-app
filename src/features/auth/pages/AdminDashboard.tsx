@@ -15,10 +15,9 @@ import {
   useSuspendUser, useBanUser, useUpdateAdminUser,
   useIssueRefund, useCoupons, useIssueCoupon,
   useDisputes, useUpdateDisputeStatus, useAddEvidence,
-  useAuditLogs,
-  type AdminUser, type Dispute, type Coupon, type AuditLog,
+  useAuditLogs, useAdminListings, useApproveListing, useRejectListing,
+  type AdminUser, type Dispute, type Coupon, type AuditLog, type AdminListing,
 } from '../../admin/hooks/useAdminData';
-import { useListings } from '../../listings/hooks/useListings';
 import { useBookings } from '../../bookings/hooks/useBookings';
 import DashboardTopbar from '../components/DashboardTopbar';
 import Spinner from '../../../shared/components/Spinner';
@@ -348,20 +347,75 @@ function UsersTable() {
 }
 
 function ListingsTable() {
-  const { data: listings = [], isLoading } = useListings();
-  const { mutate: deleteListing, isPending } = useDeleteListing();
+  const { data: listings = [], isLoading } = useAdminListings();
+  const { mutate: deleteListing, isPending: deleting } = useDeleteListing();
+  const { mutate: approveListing, isPending: approving } = useApproveListing();
+  const { mutate: rejectListing, isPending: rejecting } = useRejectListing();
+  const [rejectTarget, setRejectTarget] = useState<AdminListing | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
   if (isLoading) return <Spinner />;
+
+  const busy = deleting || approving || rejecting;
+  const pendingCount = listings.filter((l) => l.approvalStatus === 'PENDING').length;
+
+  function submitReject(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!rejectTarget || !rejectReason.trim()) return;
+    rejectListing(
+      { id: rejectTarget.id, reason: rejectReason.trim() },
+      {
+        onSuccess: () => {
+          setRejectTarget(null);
+          setRejectReason('');
+        },
+      }
+    );
+  }
+
   return (
     <section className="db-panel">
+      {rejectTarget && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <form onSubmit={submitReject} style={{ background: '#fff', borderRadius: 12, padding: '2rem', width: 460, display: 'flex', flexDirection: 'column', gap: '1rem', boxShadow: '0 8px 40px rgba(0,0,0,0.2)' }}>
+            <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Reject Listing</h3>
+            <p style={{ margin: 0, color: '#555', fontSize: '0.9rem' }}>
+              Give the host a clear reason for rejecting <strong>{rejectTarget.title}</strong>.
+            </p>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: '0.85rem', fontWeight: 600, color: '#555' }}>
+              Rejection reason <span style={{ color: '#c62828' }}>*</span>
+              <textarea
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                rows={4}
+                autoFocus
+                placeholder="e.g. Photos are unclear, location details are incomplete, or pricing appears inaccurate."
+                style={{ padding: '0.65rem 0.75rem', border: '1px solid #e0e0e0', borderRadius: 6, outline: 'none', resize: 'vertical', fontFamily: 'inherit' }}
+              />
+            </label>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button type="button" onClick={() => { setRejectTarget(null); setRejectReason(''); }}
+                style={{ padding: '0.5rem 1rem', border: '1px solid #ddd', borderRadius: 6, cursor: 'pointer', background: '#fff' }}>
+                Cancel
+              </button>
+              <button type="submit" disabled={rejecting || !rejectReason.trim()}
+                style={{ padding: '0.5rem 1rem', background: '#c62828', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600, opacity: !rejectReason.trim() ? 0.6 : 1 }}>
+                {rejecting ? 'Rejecting...' : 'Reject listing'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
       <div className="db-panel__header">
         <h2>All Listings</h2>
-        <span style={{ fontSize: '0.8rem', color: '#888', background: '#f5f5f5', padding: '2px 10px', borderRadius: 12 }}>{listings.length} total</span>
+        <span style={{ fontSize: '0.8rem', color: '#888', background: '#f5f5f5', padding: '2px 10px', borderRadius: 12 }}>
+          {listings.length} total · {pendingCount} pending
+        </span>
       </div>
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
           <thead>
             <tr style={{ borderBottom: '2px solid #f0f0f0', textAlign: 'left' }}>
-              {['Title', 'Location', 'Type', 'Price/night', 'Rating', 'Actions'].map((h) => (
+              {['Title', 'Host', 'Location', 'Type', 'Price/night', 'Status', 'Rating', 'Actions'].map((h) => (
                 <th key={h} style={{ padding: '0.75rem 1rem', color: '#888', fontWeight: 600 }}>{h}</th>
               ))}
             </tr>
@@ -369,17 +423,53 @@ function ListingsTable() {
           <tbody>
             {listings.map((l) => (
               <tr key={l.id} style={{ borderBottom: '1px solid #f5f5f5' }}>
-                <td style={{ padding: '0.85rem 1rem', fontWeight: 600 }}>{l.title}</td>
+                <td style={{ padding: '0.85rem 1rem', fontWeight: 600 }}>
+                  {l.title}
+                  {l.rejectionReason && (
+                    <p style={{ margin: '4px 0 0', color: '#c62828', fontSize: '0.75rem', fontWeight: 500 }}>
+                      {l.rejectionReason}
+                    </p>
+                  )}
+                </td>
+                <td style={{ padding: '0.85rem 1rem', color: '#555' }}>{l.host?.name ?? 'Unknown'}</td>
                 <td style={{ padding: '0.85rem 1rem', color: '#555' }}>{l.location}</td>
-                <td style={{ padding: '0.85rem 1rem' }}><span style={{ background: '#f5f5f5', padding: '2px 8px', borderRadius: 8, fontSize: '0.78rem' }}>{l.category}</span></td>
-                <td style={{ padding: '0.85rem 1rem', fontWeight: 600, color: '#ef4f38' }}>{numeral(l.price).format('$0')}</td>
-                <td style={{ padding: '0.85rem 1rem', color: '#555' }}>★ {l.rating.toFixed(1)}</td>
+                <td style={{ padding: '0.85rem 1rem' }}><span style={{ background: '#f5f5f5', padding: '2px 8px', borderRadius: 8, fontSize: '0.78rem' }}>{l.type}</span></td>
+                <td style={{ padding: '0.85rem 1rem', fontWeight: 600, color: '#ef4f38' }}>{numeral(l.pricePerNight).format('$0')}</td>
                 <td style={{ padding: '0.85rem 1rem' }}>
-                  <button disabled={isPending}
-                    onClick={() => { if (confirm(`Delete "${l.title}"?`)) deleteListing(l.id); }}
-                    style={{ background: 'none', border: '1px solid #e0e0e0', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', color: '#c62828', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    <FaTrashAlt /> Delete
-                  </button>
+                  <span style={{
+                    background: l.approvalStatus === 'APPROVED' ? '#e8f5e9' : l.approvalStatus === 'REJECTED' ? '#fce8e6' : '#fff8e1',
+                    color: l.approvalStatus === 'APPROVED' ? '#2e7d32' : l.approvalStatus === 'REJECTED' ? '#c62828' : '#f57f17',
+                    padding: '2px 8px',
+                    borderRadius: 10,
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                  }}>
+                    {l.approvalStatus}
+                  </span>
+                </td>
+                <td style={{ padding: '0.85rem 1rem', color: '#555' }}>★ {(l.rating ?? 0).toFixed(1)}</td>
+                <td style={{ padding: '0.85rem 1rem' }}>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {l.approvalStatus !== 'APPROVED' && (
+                      <button disabled={busy}
+                        onClick={() => approveListing(l.id)}
+                        style={{ background: '#e8f5e9', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', color: '#2e7d32', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        <FaCheck /> Approve
+                      </button>
+                    )}
+                    {l.approvalStatus !== 'REJECTED' && (
+                      <button disabled={busy}
+                        onClick={() => setRejectTarget(l)}
+                        style={{ background: '#fff8e1', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', color: '#b45309', fontSize: '0.8rem' }}>
+                        Reject
+                      </button>
+                    )}
+                    <button disabled={busy}
+                      onClick={() => { if (confirm(`Delete "${l.title}"?`)) deleteListing(l.id); }}
+                      style={{ background: 'none', border: '1px solid #e0e0e0', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', color: '#c62828', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      <FaTrashAlt /> Delete
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

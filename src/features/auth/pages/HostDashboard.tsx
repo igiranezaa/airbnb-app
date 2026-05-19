@@ -136,6 +136,13 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
   const [deleteTarget, setDeleteTarget] = useState<HostListing | null>(null);
 
   function togglePublish(l: HostListing) {
+    if (l.approvalStatus && l.approvalStatus !== 'APPROVED') {
+      toast.error(l.approvalStatus === 'REJECTED'
+        ? 'This listing was rejected. Edit it and submit again for admin approval.'
+        : 'This listing is waiting for admin approval.');
+      return;
+    }
+
     updateListing(
       { id: l.id, published: !l.published },
       {
@@ -332,7 +339,7 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
                   </span>
                   <span className="db-listing-row__bookings">{l._count?.bookings ?? 0} bookings</span>
                   <span className={`db-listing-status ${l.published ? 'db-listing-status--published' : 'db-listing-status--draft'}`}>
-                    {l.published ? 'Published' : 'Draft'}
+                    {l.approvalStatus === 'REJECTED' ? 'Rejected' : l.approvalStatus === 'PENDING' ? 'Pending review' : l.published ? 'Published' : 'Draft'}
                   </span>
                 </div>
                 <h3 className="db-listing-row__title">
@@ -343,6 +350,11 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
                 <p className="db-listing-row__price">
                   {numeral(l.pricePerNight).format('$0,0')} <span>/ night</span>
                 </p>
+                {l.approvalStatus === 'REJECTED' && l.rejectionReason && (
+                  <p style={{ margin: '0.35rem 0 0', color: '#c62828', fontSize: '0.82rem', fontWeight: 600 }}>
+                    Admin reason: {l.rejectionReason}
+                  </p>
+                )}
               </div>
               <div className="db-listing-row__actions">
                 <button

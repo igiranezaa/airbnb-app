@@ -42,6 +42,8 @@ export interface HostListing {
   type: ListingType;
   rating: number | null;
   published: boolean;
+  approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
+  rejectionReason?: string | null;
   instantBook: boolean;
   cleaningFee: number;
   minNights: number;
