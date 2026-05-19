@@ -51,10 +51,8 @@ export function useListings(params?: ListingSearchParams) {
       q.set('limit', '100');
       try {
         const { data } = await api.get<PaginatedResponse<BackendListing>>(`/listings/search?${q.toString()}`);
-        if (data.data.length === 0 && !hasActiveParams) return mockListings;
         return data.data.map(transformListing);
       } catch {
-        if (!hasActiveParams) return mockListings;
         return [];
       }
     },

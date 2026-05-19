@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Card } from '../components/Card';
 import dayjs from 'dayjs';
 import {
@@ -16,6 +16,7 @@ import { BookingForm } from '../../bookings';
 import MessagesPanel from '../../bookings/components/MessagesPanel';
 import Spinner from '../../../shared/components/Spinner';
 import { getFallbackPhoto, getListingPhotos } from '../utils/photos';
+import type { Listing } from '../types';
 import './ListingDetail.css';
 
 const POLICY_LABELS: Record<string, string> = {
@@ -49,6 +50,8 @@ function StarPicker({ value, onChange }: { value: number; onChange: (n: number) 
 export default function ListingDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const locationState = useLocation().state as { listing?: Listing } | null;
+  const routeListing = locationState?.listing?.id === id ? locationState?.listing : undefined;
   const { userId, userRole, isAuthenticated } = useAuth();
 
   const [showBooking, setShowBooking]   = useState(false);
@@ -62,14 +65,15 @@ export default function ListingDetail() {
   const [comment, setComment] = useState('');
   const [subs, setSubs] = useState<SubRatings>({ cleanliness: 0, accuracy: 0, checkin: 0, communication: 0, location: 0, value: 0 });
 
-  const { data: listing, isLoading, isError } = useListing(id);
+  const { data: fetchedListing, isLoading, isError } = useListing(id);
+  const listing = fetchedListing ?? routeListing;
   const { isSaved, toggle, isPending } = useToggleSaved(id ?? '');
   const { data: allListings = [] } = useListings();
   const { data: reviews = [] } = useReviews(id);
   const { mutate: createReview, isPending: submittingReview, error: reviewError } = useCreateReview(id);
   const { mutate: respondToReview, isPending: submittingResponse } = useRespondToReview();
 
-  if (isLoading) return <Spinner />;
+  if (isLoading && !listing) return <Spinner />;
   if (isError || !listing) {
     return (
       <div className="detail-not-found">

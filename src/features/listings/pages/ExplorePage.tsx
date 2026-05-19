@@ -78,7 +78,7 @@ function ExploreCard({
   return (
     <div
       className={`explore-card${active ? ' explore-card--active' : ''}`}
-      onClick={() => navigate(`/listings/${listing.id}`)}
+      onClick={() => navigate(`/listings/${listing.id}`, { state: { listing } })}
       onMouseEnter={() => onHover(listing.id)}
       onMouseLeave={() => onHover(null)}
     >
