@@ -288,7 +288,11 @@ function HostListings({ listings, isLoading }: { listings: HostListing[]; isLoad
       closeEdit();
     } catch (error) {
       const message = getRequestErrorMessage(error);
-      toast.error(message || 'Failed to save listing photos. Please try again.');
+      toast.error(
+        message === 'Something went wrong'
+          ? 'Photo upload failed on the server. Check the Render Cloudinary environment variables, then redeploy the API.'
+          : message || 'Failed to save listing photos. Please try again.'
+      );
     } finally {
       setIsUploadingEditPhotos(false);
     }
