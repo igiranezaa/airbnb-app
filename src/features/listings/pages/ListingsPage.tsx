@@ -1,5 +1,5 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { List as FixedSizeList, type RowComponentProps } from 'react-window';
 import { FaTh, FaList, FaTimes, FaFilter, FaMap, FaMapMarkerAlt } from 'react-icons/fa';
 import { useStore } from '../../../store/StoreContext';
@@ -60,11 +60,12 @@ interface ListingRowProps {
   listMode: boolean;
   hoveredId: string | null;
   onHoverListing: (id: string | null) => void;
+  onOpenListing: (listing: Listing) => void;
 }
 
 function ListingRow({
   index, style, ariaAttributes,
-  rows, columnWidth, isSaved, onToggleSave, listMode, hoveredId, onHoverListing,
+  rows, columnWidth, isSaved, onToggleSave, listMode, hoveredId, onHoverListing, onOpenListing,
 }: RowComponentProps<ListingRowProps>) {
   const rowItems = rows[index];
   return (
@@ -88,7 +89,13 @@ function ListingRow({
           onMouseEnter={() => onHoverListing(listing.id)}
           onMouseLeave={() => onHoverListing(null)}
         >
-          <Card listing={listing} saved={isSaved(listing.id)} onToggleSave={onToggleSave} className={`card${listMode ? ' card--list' : ''}`}>
+          <Card
+            listing={listing}
+            saved={isSaved(listing.id)}
+            onToggleSave={onToggleSave}
+            className={`card${listMode ? ' card--list' : ''}`}
+            onClick={() => onOpenListing(listing)}
+          >
             <Card.Image />
             <div className="card__body">
               <Card.Badge />
@@ -126,6 +133,7 @@ function PriceRangeSlider({ minVal, maxVal, onChange }: {
 
 export default function ListingsPage() {
   const [urlParams] = useSearchParams();
+  const navigate = useNavigate();
 
   /* ── Search bar state (applied immediately) ── */
   const [checkIn, setCheckIn] = useState(() => urlParams.get('checkIn') ?? '');
@@ -227,6 +235,9 @@ export default function ListingsPage() {
   }, [filtered, columnCount]);
 
   const handleToggleSave = useCallback((id: string, title: string) => toggle(id, title), [toggle]);
+  const openListing = useCallback((listing: Listing) => {
+    navigate(`/listings/${listing.id}`, { state: { listing } });
+  }, [navigate]);
 
   const toggleCategory = useCallback((cat: string) => {
     setDraft((prev) => ({
@@ -252,8 +263,17 @@ export default function ListingsPage() {
     [rows.length, rowHeight]
   );
   const rowProps = useMemo(
-    () => ({ rows, columnWidth: colWidth, isSaved, onToggleSave: handleToggleSave, listMode: viewMode === 'list', hoveredId, onHoverListing: setHoveredId }),
-    [rows, colWidth, isSaved, handleToggleSave, viewMode, hoveredId]
+    () => ({
+      rows,
+      columnWidth: colWidth,
+      isSaved,
+      onToggleSave: handleToggleSave,
+      listMode: viewMode === 'list',
+      hoveredId,
+      onHoverListing: setHoveredId,
+      onOpenListing: openListing,
+    }),
+    [rows, colWidth, isSaved, handleToggleSave, viewMode, hoveredId, openListing]
   );
 
   const midPrice = Math.round((draft.minPrice + draft.maxPrice) / 2);

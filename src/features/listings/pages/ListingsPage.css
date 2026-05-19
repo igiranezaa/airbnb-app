@@ -613,6 +613,7 @@
 .listings-virtual-container .card {
   height: 100%;
   width: 100%;
+  cursor: pointer;
 }
 
 .listings-row--list .card {
